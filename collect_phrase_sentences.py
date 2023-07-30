@@ -5,35 +5,7 @@ import re
 
 from tqdm import tqdm
 
-def read_ukwac(file_path):
-    with open(file_path, errors='ignore') as i:
-        marker = True
-        for l in i:
-            if marker:
-                sentence = {
-                    'words' : list(),
-                    'lemmas' : list(),
-                    'dep' : list(),
-                    }
-            line = l.strip().split('\t')
-            #print(line)
-            if line[0][:5] == '<text': 
-                marker = False
-                continue
-            elif line[0][:3] == '<s>':
-                marker = False
-                continue
-            elif line[0][:7] == '</text>':
-                marker = False
-                continue
-            elif line[0][:4] == '</s>':
-                marker = True
-                yield sentence
-            else:
-                sentence['words'].append(line[0])
-                sentence['lemmas'].append(line[1])
-                sentence['dep'].append(line[2])
-                marker = False
+from utils import read_pukwac
 
 out_folder = 'sentences'
 os.makedirs(out_folder, exist_ok=True)

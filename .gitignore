@@ -1,1 +1,4 @@
 sentences/
+freqs.pkl
+coocs.pkl
+vocab.pkl

@@ -4,6 +4,8 @@ import scipy
 
 from scipy import stats
 
+from utils import read_brysbaert_norms
+
 ### frequencies
 
 coocs = dict()
@@ -23,32 +25,7 @@ for f in os.listdir(folder):
             coocs[line[1]] = int(line[2])
             coocs[line[3]] = int(line[4])
 
-### valence, arousal and dominance
-
-val = dict()
-aro = dict()
-dom = dict()
-
-counter = 0
-with open(os.path.join('data', 'BRM-emot-submit.csv')) as i:
-    for l in i:
-        if counter == 0:
-            counter += 1
-            continue
-        line = l.strip().split(',')
-        val[line[1]] = float(line[2])
-        aro[line[1]] = float(line[5])
-        dom[line[1]] = float(line[8])
-
-conc = dict()
-counter = 0
-with open(os.path.join('data', 'Concreteness_ratings_Brysbaert_et_al_BRM.txt')) as i:
-    for l in i:
-        if counter == 0:
-            counter += 1
-            continue
-        line = l.strip().split('\t')
-        conc[line[0]] = float(line[2])
+conc, val, aro, dom = read_brysbaert_norms()
 
 counter = 0
 concrete_list = list()
