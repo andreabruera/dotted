@@ -32,9 +32,13 @@ def coocs_counter(all_args):
                 key = '{}_{}'.format(lemma, dep)
                 keyed_sentence.append(vocab[key])
             for start_i, start in enumerate(keyed_sentence):
-                sent_slice = keyed_sentence[start_i+1, start_i+3]
+                sent_slice = keyed_sentence[start_i+1:start_i+3]
+                #print(sent_slice)
                 for other in sent_slice:
                     coocs[start][other] += 1
+                    ### debugging
+                    #if (start, other) != (0, 0):
+                    #    print(coocs[start][other])
                 counter.update(1)
     return coocs
 
@@ -57,7 +61,9 @@ nouns = [w for w in read_nouns() if (len(w)>=6 and len(w)<=9 and pos[w]=='Noun')
 path = os.path.join('/', 'import', 'cogsci', 'andrea', 'dataset', 'corpora', 'PukWaC')
 paths = [os.path.join(path, f) for f in os.listdir(path)]
 
-freqs_file = 'freqs.pkl'
+pkls = 'pickles'
+
+freqs_file = os.path.join(pkls, 'freqs.pkl')
 if os.path.exists(freqs_file):
     with open(freqs_file, 'rb') as i:
         print('loading freqs')
@@ -108,14 +114,13 @@ for w in nouns:
         relevant_words.append('{}_{}'.format(w, k))
 
 print('creating the vocabulary...')
-vocab_file = 'vocab.pkl'
+vocab_file = os.path.join(pkls, 'vocab.pkl')
 if os.path.exists(vocab_file):
     with open(vocab_file, 'rb') as i:
         print('loading vocab')
         vocab = pickle.load(i)
         print('loaded!')
 else:
-
     vocab = dict()
     counter = 1
     for k, v in tqdm(final_freqs.items()):
@@ -124,19 +129,32 @@ else:
             counter += 1
         else:
             vocab[k] = 0
-print('created!')
+    with open(vocab_file, 'wb') as o:
+        pickle.dump(vocab, o)
 
-relevant = set()
-for k in coocs.keys():
-    coocs[k] = dict()
-    relevant.update([k, freqs[k]])
-    for k_two in coocs.keys():
-        coocs[k][k_two] = dict()
+ids = set(vocab.values())
+coocs = {i_one : {i_two : 0 for i_two in ids} for i_one in ids}
+final_coocs = coocs.copy()
 
-for rel in relevant:
-    print(rel)
+#relevant = set()
+#relevant.update([k, freqs[k]])
 
-coocs_file = 'coocs.pkl'
+all_relevant = {k : final_freqs[k] for k, v in vocab.items() if v!=0}
+relevant_list = [k.split('_')[0] for k in all_relevant.keys()]
+assert len(relevant_list) == len(all_relevant.keys())
+final_relevant = {k : 0 for k in relevant_list if k in nouns}
+for k, v in all_relevant.items():
+    try:
+        final_relevant[k.split('_')[0]] += v
+    except KeyError:
+        pass
+
+sorted_nouns = sorted(final_relevant.items(), key=lambda item : item[1])
+
+#for k, v in sorted_nouns:
+#    print([k, v])
+
+coocs_file = os.path.join(pkls, 'coocs.pkl')
 if os.path.exists(coocs_file):
     with open(coocs_file, 'rb') as i:
         print('loading coocs')
@@ -154,7 +172,31 @@ else:
     for coocs_dict in results:
         for k, v in coocs_dict.items():
             for k_two, v_two in v.items():
-                final_coocs[k] += v
+                final_coocs[k][k_two] += v_two
 
     with open(coocs_file, 'wb') as o:
         pickle.dump(final_coocs, o)
+
+### writing coocs
+
+relevant_vocab_items = {v : k.split('_')[0] for k, v in vocab.items() if v != 0}
+
+items_counter = {v : {v_two : 0 for k_two, v_two in relevant_vocab_items.items()} for k, v in relevant_vocab_items.items()}
+
+for k_one, v_one in relevant_vocab_items.items():
+    for k_two, v_two in relevant_vocab_items.items():
+        if k_one != 0 and k_two != 0:
+            items_counter[v_one][v_two] += final_coocs[k_one][k_two]
+
+abs_verbs = [v for v in abs_verbs if v in items_counter.keys()]
+conc_verbs = [v for v in conc_verbs if v in items_counter.keys()]
+        
+nouns_counter = {w : {'abstract' : {v : items_counter[v][w] for v in abs_verbs}, 'concrete' : {v : items_counter[v][w] for v in conc_verbs}} for w in nouns}
+
+with open('pukwac_top_100_verb_noun_coocs.txt', 'w') as o:
+    o.write('noun\tverb\tcase\tfrequency\n')
+    for w, w_dict in nouns_counter.items():
+        for case, case_dict in w_dict.items():
+            sorted_verbs = sorted(case_dict.items(), key=lambda item : item[1], reverse=True)[:100]
+            for v, freq in sorted_verbs:
+                o.write('{}\t{}\t{}\t{}\n'.format(w, v, case, freq))

@@ -16,7 +16,7 @@ def sensible_finder(all_args):
     ent_sentences = {k : list() for k in stimuli}
     with tqdm() as counter:
         hard_counter = 0
-        for sentence in read_ukwac(file_path):
+        for sentence in read_pukwac(file_path):
             if hard_counter > 100000:
                 continue
             lemmas = ' '.join(sentence['lemmas'])
@@ -81,7 +81,15 @@ for l in nouns_and_verbs:
     for v in verbs:
         stimuli.append('{} {}'.format(v, noun))
 
-path = os.path.join('/', 'import', 'cogsci', 'andrea', 'dataset', 'corpora', 'PukWaC')
+path = os.path.join(
+                    '/', 
+                    'import',
+                    'cogsci', 
+                    'andrea', 
+                    'dataset', 
+                    'corpora', 
+                    'PukWaC'
+                    )
 paths = [os.path.join(path, f) for f in os.listdir(path)]
 
 #for file_path in paths:
