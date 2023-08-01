@@ -134,7 +134,7 @@ collector['count-ppmi'] = {k : numpy.average(
                               #max(
                                  numpy.log2(
                                  (
-                                  max(final_coocs[vocab[k_word]][vocab[other]], 0.1) / total
+                                  max(final_coocs[vocab[k_word]][vocab[other]], 0.1)# / total
                                   ) / (
                                        final_freqs[k_word] * (final_freqs[other]**0.75)
                                  #      )
