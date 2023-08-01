@@ -14,7 +14,7 @@ for f in os.listdir(folder):
         vecs = [l.strip().split('\t') for l in i.readlines()][1:]
         assert len(vecs) == 100
         vecs = {l[0] : numpy.array(l[1:], dtype=numpy.float64) for l in vecs}
-        key = f.split('_')[0]
+        key = f.split('_')[0].strip()
         data[key] = vecs
 
 ### pairwise similarities
