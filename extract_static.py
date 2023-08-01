@@ -129,12 +129,12 @@ else:
 total = sum([final_freqs[w] for w in conc_vocab])
 
 collector['count'] = {k : numpy.average([[final_coocs[vocab[k_word]][vocab[other]] for other in conc_vocab] for k_word in k.split()], axis=0) for k in full_stimuli}
-collector['count-ppmi'] = {k : numpy.average(
+collector['count-pmi'] = {k : numpy.average(
                             [[
                               #max(
                                  numpy.log2(
                                  (
-                                  max(final_coocs[vocab[k_word]][vocab[other]], 0.1)# / total
+                                  max(final_coocs[vocab[k_word]][vocab[other]], 0.1) / total
                                   ) / (
                                        final_freqs[k_word] * (final_freqs[other]**0.75)
                                  #      )
