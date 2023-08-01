@@ -59,12 +59,18 @@ def read_brysbaert_norms():
             conc[line[0]] = float(line[2])
     return conc, val, aro, dom
 
-def read_pos():
+def read_pos(prune=False):
 
     pos = dict()
+    counter = 0
     with open(os.path.join('data', 'SUBTLEX-US_freq_with_PoS.txt')) as i:
         for l in i:
+            if counter == 0:
+                counter += 1
+                continue
             line = l.strip().split('\t')
+            if prune and int(line[1])<100:
+                continue
             pos[line[0]] = line[9]
     return pos
 

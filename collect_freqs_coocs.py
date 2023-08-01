@@ -136,8 +136,7 @@ ids = set(vocab.values())
 coocs = {i_one : {i_two : 0 for i_two in ids} for i_one in ids}
 final_coocs = coocs.copy()
 
-#relevant = set()
-#relevant.update([k, freqs[k]])
+### looking at noun frequencies
 
 all_relevant = {k : final_freqs[k] for k, v in vocab.items() if v!=0}
 relevant_list = [k.split('_')[0] for k in all_relevant.keys()]
@@ -151,8 +150,10 @@ for k, v in all_relevant.items():
 
 sorted_nouns = sorted(final_relevant.items(), key=lambda item : item[1])
 
-#for k, v in sorted_nouns:
-#    print([k, v])
+for k, v in sorted_nouns:
+    print([k, v])
+
+### collecting co-occurrences
 
 coocs_file = os.path.join(pkls, 'coocs.pkl')
 if os.path.exists(coocs_file):
