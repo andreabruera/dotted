@@ -21,14 +21,15 @@ with open('phrases.txt') as i:
             print(l)
             continue
         line = l.strip().split('\t')
-        assert len(line) == 5
+        #print(line)
+        assert len(line) in [5, 6]
        # concrete_list.extend(line[1:3])
        # abstract_list.extend(line[3:])
         nouns.append(line[0])
-        for i in range(1, 3):
-            stimuli['concrete'].append((line[0], line[i]))
-        for i in range(3, 5):
-            stimuli['abstract'].append((line[0], line[i]))
+        for idx in range(1, 3):
+            stimuli['concrete'].append((line[0], line[idx]))
+        for idx in range(3, 5):
+            stimuli['abstract'].append((line[0], line[idx]))
 
 #assert len(abstract_list) == len(concrete_list)
 ### frequencies
@@ -36,7 +37,7 @@ with open('phrases.txt') as i:
 coocs = {'abstract' : list(), 'concrete' : list()}
 counter = 0
 
-with open(os.path.join('pukwac_frequencies.txt')) as i:
+with open(os.path.join('pukwac_top_100_verb_noun_coocs.txt')) as i:
     for l in i:
         if counter == 0:
             counter += 1
