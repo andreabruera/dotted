@@ -14,11 +14,12 @@ for f in os.listdir(folder):
         vecs = [l.strip().split('\t') for l in i.readlines()][1:]
         assert len(vecs) == 100
         vecs = {l[0] : numpy.array(l[1:], dtype=numpy.float64) for l in vecs}
-        key = f.split('_')[0].strip()
+        key = f.split('_')[0].lower()
         data[key] = vecs
 
 ### pairwise similarities
 sims = {key : [scipy.stats.pearsonr(v_one, v_two)[0] for k_one, v_one in model_data.items() for k_two, v_two in model_data.items() if k_one!=k_two] for key, model_data in data.items()}
+print(sorted(sims.keys()))
 corrs = [[round(scipy.stats.pearsonr(sims[simz_one], sims[simz_two])[0], 2) for simz_two in sorted(sims.keys())] for simz_one in sorted(sims.keys())]
 fig, ax = pyplot.subplots(constrained_layout=True)
 ax.imshow(corrs)
