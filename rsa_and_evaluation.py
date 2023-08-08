@@ -9,7 +9,7 @@ import sklearn
 
 from matplotlib import pyplot
 from mne import stats
-from sklearn.linear_model import RidgeCV
+from sklearn.linear_model import LinearRegression, RidgeCV
 from scipy import stats
 from tqdm import tqdm
 
@@ -100,7 +100,8 @@ for model, vecs in tqdm(model_data.items()):
             train_human = [ratings[k] for k in sorted(ratings.keys()) if k not in split]
             test_model = [vecs[k] for k in split]
             test_human = [ratings[k] for k in split]
-            ridge = RidgeCV(alphas=(0.01, 0.1, 1.0, 10.0, 100.0, 1000.))
+            #ridge = RidgeCV(alphas=(0.01, 0.1, 1.0, 10.0, 100.0, 1000.))
+            ridge = LinearRegression()
             ridge.fit(train_model, train_human)
             predictions = ridge.predict(test_model)
             corr = scipy.stats.pearsonr(predictions, test_human)[0]
@@ -138,7 +139,7 @@ ax.set_xticklabels([m.replace('-', '\n') for m in models_sorted], fontsize=23, h
 ax.legend(fontsize=15)
 ax.set_ylabel('Pearson correlation', fontsize=20, fontweight='bold')
 
-pyplot.savefig(os.path.join(plot_folder, 'correlation_results.jpg'), dpi=300)
+pyplot.savefig(os.path.join(plot_folder, 'correlation_results_basic_regression.jpg'), dpi=300)
 pyplot.clf()
 pyplot.close()
 
@@ -165,7 +166,8 @@ for model, vecs in tqdm(model_data.items()):
         for word in test_words:
             train_model = [vecs[k] for k in sorted(vecs.keys()) if k.split()[-1]!=word]
             train_human = [ratings[k] for k in sorted(ratings.keys()) if k.split()[-1]!=word]
-            ridge = RidgeCV(alphas=(0.01, 0.1, 1.0, 10.0, 100.0, 1000.))
+            #ridge = RidgeCV(alphas=(0.01, 0.1, 1.0, 10.0, 100.0, 1000.))
+            ridge = LinearRegression()
             ridge.fit(train_model, train_human)
             test_keys = [phr for phr in vecs.keys() if phr.split()[-1]==word]
             conc_phr = [phr for phr in test_keys if phr.split()[0] in conc_verbs]
@@ -238,6 +240,6 @@ ax.set_xticklabels([m.replace('-', '\n') for m in models_sorted], fontsize=23, h
 ax.legend(fontsize=15)
 ax.set_ylabel('pairwise sense discrimination accuracy', fontsize=20, fontweight='bold')
 
-pyplot.savefig(os.path.join(plot_folder, 'pairwise_polysemy_results.jpg'), dpi=300)
+pyplot.savefig(os.path.join(plot_folder, 'pairwise_polysemy_results_basic_regression.jpg'), dpi=300)
 pyplot.clf()
 pyplot.close()
