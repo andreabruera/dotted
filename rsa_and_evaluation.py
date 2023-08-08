@@ -132,6 +132,7 @@ for var_i, var in enumerate(variables):
 for col_name, pal in palette.items():
     ax.bar([0.], [0.], color=pal, label=col_name)
 
+ax.hlines([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], xmin=-0.1, color='grey', alpha=0.4, xmax=len(variables)+.1, linestyles='dashdot', zorder=2.5)
 ax.set_xticks([i+(len(corrections)/20) for i in range(len(sims.keys()))])
 ax.set_xticklabels([m.replace('-', '\n') for m in models_sorted], fontsize=23, ha='center', rotation=45, fontweight='bold')
 ax.legend(fontsize=15)
@@ -226,6 +227,7 @@ for var_i, var in enumerate(variables):
                     zorder=2.5,)
     '''
 ax.hlines([0.5], xmin=-0.1, color='black', xmax=len(variables)+.1, linestyles='dashdot', zorder=2.5)
+ax.hlines([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8], xmin=-0.1, color='grey', alpha=0.4, xmax=len(variables)+.1, linestyles='dashdot', zorder=2.5)
 ### dummy to do the legend
 
 for col_name, pal in palette.items():
