@@ -10,24 +10,51 @@ import sklearn
 from matplotlib import pyplot
 from mne import stats
 from sklearn.linear_model import LinearRegression, RidgeCV
+from sklearn.neural_network import MLPRegressor
 from scipy import stats
 from tqdm import tqdm
 
+def load_regression(regression_model='ridge'):
+
+    if regression_model == 'ridge':
+        ### l2-normalized regression
+        regression = RidgeCV(alphas=(0.01, 0.1, 1.0, 10.0, 100.0, 1000.))
+    elif regression_model == 'basic':
+        ### standard linear regression
+        regression = LinearRegression()
+    elif regression_model == 'mlp':
+        ### MLP
+        size = 100
+        regression = MLPRegressor(hidden_layer_sizes=(size,),activation='tanh', )
+    else:
+        raise RuntimeError('specified model ({}) is not implemented')
+
+    return regression
+
+regression_model = 'ridge'
+standardize = False
+
 palette = {
-           'concreteness' : '#377eb8',
-           'imageability' : '#ff7f00', 
-           'familiarity' : '#4daf4a',
-           'hearing' : '#f781bf',
-           'sight' : '#a65628',
-           'smell' : '#984ea3',
-           'taste' : '#999999',
-           'touch' : '#e41a1c',
-           'average' : '#dede00',
+           'concreteness' : '#E69F00',
+           'imageability' : '#56B4E9', 
+           'familiarity' : '#CC79A7',
+           'smell' : '#009E73',
+           'hearing' : 'silver',
+           'sight' : '#D55E00',
+           'taste' : '#F0E442',
+           'touch' : '#0072B2',
+           'average' : '#000000',
            }
 models_sorted = ['count', 'count-log', 'count-pmi', 'w2v', 'fasttext', 'roberta-large', 'gpt2-xl', 'opt',]
 
 plot_folder = 'plots'
 os.makedirs(plot_folder, exist_ok=True)
+errors_folder = os.path.join(plot_folder, 'errors')
+os.makedirs(errors_folder, exist_ok=True)
+corr_folder = os.path.join(plot_folder, 'correlation_analysis')
+os.makedirs(corr_folder, exist_ok=True)
+poly_folder = os.path.join(plot_folder, 'sense_discrimination_analysis')
+os.makedirs(poly_folder, exist_ok=True)
 
 ### reading data
 
@@ -83,15 +110,17 @@ for f in os.listdir(folder):
                     human_data[val][key] = list()
                 for l in lines[1:]:
                     human_data[val][key].append(int(l[head_i]))
-human_data = {k : {k_two : numpy.average(v_two) for k_two, v_two in v.items()} for k, v in human_data.items()}
+human_data = {k : {k_two : numpy.nanmean(v_two) for k_two, v_two in v.items()} for k, v in human_data.items()}
 
 ### correlations
+print('evaluating on regression correlation')
 
 ### 80-20 splits
 test_splits = [list(random.sample(list(vecs.keys()), k=20)) for i in range(20)]
 
 ### actual evaluation
 evaluations = {k : {k_two : list() for k_two in human_data.keys()} for k in model_data.keys()}
+all_errors = {k : {k_two : list() for k_two in human_data.keys()} for k in model_data.keys()}
 for model, vecs in tqdm(model_data.items()):
     for variable, ratings in human_data.items():
         assert sorted(vecs.keys()) == sorted(ratings.keys())
@@ -100,34 +129,174 @@ for model, vecs in tqdm(model_data.items()):
             train_human = [ratings[k] for k in sorted(ratings.keys()) if k not in split]
             test_model = [vecs[k] for k in split]
             test_human = [ratings[k] for k in split]
-            #ridge = RidgeCV(alphas=(0.01, 0.1, 1.0, 10.0, 100.0, 1000.))
-            ridge = LinearRegression()
-            ridge.fit(train_model, train_human)
-            predictions = ridge.predict(test_model)
+            if standardize:
+                ### scaler is fit on train ONLY to avoid circularity
+                model_scaler = sklearn.preprocessing.StandardScaler().fit(train_model)
+                human_scaler = sklearn.preprocessing.StandardScaler().fit(numpy.array(train_human).reshape(-1, 1))
+                train_model = model_scaler.transform(train_model)
+                test_model = model_scaler.transform(test_model)
+                train_human = human_scaler.transform(numpy.array(train_human).reshape(-1, 1))[:, 0]
+                test_human = human_scaler.transform(numpy.array(test_human).reshape(-1, 1))[:, 0]
+            regression = load_regression(regression_model)
+            regression.fit(train_model, train_human)
+            predictions = regression.predict(test_model)
+            errors = numpy.sum([test_human,-predictions], axis=0)**2
+            assert errors.shape == predictions.shape
+            for real, error in zip(test_human, errors):
+                all_errors[model][variable].append((real, error))
             corr = scipy.stats.pearsonr(predictions, test_human)[0]
             evaluations[model][variable].append(corr)
 
-for model, model_res in evaluations.items():
-    evaluations[model]['average'] = [numpy.average(v) for v in model_res.values()]
+### first plotting errors
+print('plotting errors')
 
-### plotting
+for variable_selection in [['imageability', 'concreteness', 'familiarity'], ['touch', 'sight', 'smell', 'hearing', 'taste']]:
+    for model, model_errors in tqdm(all_errors.items()):
+        #if model not in ['count', 'w2v', 'gpt2-xl']:
+        #    continue
+        bins = [v/100 for v in list(range(100, 501, 25))]
+        hist_bins = [v/100 for v in list(range(100, 501, 10))]
+        line_errors = {var : {(v, v+.25) : list() for v in bins} for var in model_errors.keys()}
+        hist_values = {var : {(v, v+.1) : list() for v in hist_bins} for var in model_errors.keys()}
+        ### setting up plot
+        fig, ax = pyplot.subplots(constrained_layout=True, figsize=(22,10))
+        ax.set_xlim(left=.5, right=5.5)
+        ax.set_ylim(bottom=0., top=1.1)
+        ax.set_ylabel(
+                      'Normalized squared prediction error / normalized frequency', 
+                      fontsize=20, 
+                      fontweight='bold',
+                      labelpad=15,
+                      )
+        ax.set_xlabel(
+                      'Rating', 
+                      fontsize=20, 
+                      fontweight='bold',
+                      labelpad=15,
+                      )
+        pyplot.xticks(fontsize=15)
+        pyplot.yticks(fontsize=15)
+        title = 'Errors in prediction made by {}'.format(model)
+        ax.set_title(
+                     title, 
+                     fontsize=23,
+                     fontweight='bold',
+                     pad=20,
+                     )
+        ### dummy to do the legend
+
+        for col_name in variable_selection:
+            ax.bar([0.], [0.], color=palette[col_name], label=col_name)
+
+        for variable, variable_errors in model_errors.items():
+            if variable not in variable_selection:
+                continue
+            
+            xs = [data[0]+(random.choice(list(range(10)))/50) for data in variable_errors]
+            ys = [data[1] for data in variable_errors]
+            ### normalize y in range min-max
+            ys = [((y - min(ys)) / (max(ys) - min(ys))) for y in ys]
+            ### scatter
+            for x, y in zip(xs, ys):
+                #ax.scatter(x, y, s=3, color=numpy.random.rand(3,), zorder=3)
+                for lower_upper in line_errors[variable].keys():
+                    if x > lower_upper[0] and x < lower_upper[1]:
+                        line_errors[variable][lower_upper].append(y)
+                for lower_upper in hist_values[variable].keys():
+                    if x > lower_upper[0] and x < lower_upper[1]:
+                        hist_values[variable][lower_upper].append(y)
+            current_line = [(((avg_val[0]+avg_val[1])/2), lst) for avg_val, lst in line_errors[variable].items() if len(lst)>0]
+            xs = [data[0] for data in current_line]
+            ys = [data[1] for data in current_line]
+            ### normalize y in range min-max
+            avg_ys = [numpy.average(val) for val in ys]
+            avg_ys = [((y - min(avg_ys)) / (max(avg_ys) - min(avg_ys))) for y in avg_ys]
+            #ax.plot(xs, [numpy.average(y) for y in ys], color='gray')
+            ax.errorbar(
+                       xs,
+                       avg_ys, 
+                       yerr=[numpy.std(y) for y in ys], 
+                       color=palette[variable],
+                       ecolor='darkgray',
+                       capsize=5.,
+                       zorder=2.5,
+                       linewidth=2.5,
+                       )
+            ### histogram
+            current_line = [(((avg_val[0]+avg_val[1])/2), lst) for avg_val, lst in hist_values[variable].items()]
+            xs = [data[0] for data in current_line]
+            ys = [data[1] for data in current_line]
+            hist_ys = [len(v) for v in ys]
+            hist_ys = [((y - min(hist_ys)) / (max(hist_ys) - min(hist_ys))) for y in hist_ys]
+            '''
+            ax.bar(
+                   xs,
+                   hist_ys,
+                   color=palette[variable],
+                   alpha=0.1,
+                   zorder=2.,
+                   edgecolor='white',
+                   width=0.05,
+                   )
+            '''
+            spl = scipy.interpolate.make_interp_spline(xs, hist_ys, k=3)
+            x_itp = numpy.linspace(1, 5, 100)
+            y_itp = spl(x_itp)
+            ax.plot(
+                    x_itp,
+                    y_itp,
+                    color=palette[variable],
+                    alpha=0.175,
+                    zorder=2.
+                    )
+            ax.fill_between(
+                            x_itp,
+                            y_itp,
+                            color=palette[variable],
+                            alpha=0.125,
+                            zorder=2.,
+                            )
+
+        ax.legend(fontsize=20)
+        marker = 'dimensions' if 'concreteness' in variable_selection else 'senses'
+        file_path = os.path.join(
+                                 errors_folder,
+                                 '{}_{}_errors.jpg'.format(model, marker),
+                                 )
+        if standardize:
+            file_path.replace('.jpg', 'standardized.jpg')
+        pyplot.savefig(file_path)
+        pyplot.clf()
+        pyplot.close()
+
+print('plotting bars')
+### real plotting
+for model, model_res in evaluations.items():
+    evaluations[model]['average'] = [numpy.nanmean(v) for v in model_res.values()]
 variables = list(human_data.keys()) + ['average']
 #models = sorted(model_data.keys())
 corrections = [i/10 for i in range(len(variables))]
 
 fig, ax = pyplot.subplots(constrained_layout=True, figsize=(22,10))
-for var_i, var in enumerate(variables):
-    color = palette[var]
-    results = [evaluations[model][var] for model in models_sorted]
-    xs = [i+corrections[var_i] for i in range(len(models_sorted))]
-    bars = [numpy.average(res) for res in results]
-    ### bars
-    ax.bar(xs, bars, width=0.09, color=color, zorder=2)
-    ### scatters
-    for x, res in zip(xs, results):
-        ax.scatter([x for i in range(len(res))], [max(0, r) for r in res], color=color, alpha=0.5, 
-                    edgecolors='black',
-                    zorder=2.5,)
+out_file = os.path.join(corr_folder, 'correlation_results_{}'.format(regression_model))
+if standardize:
+    out_file = '{}_standardized'.format(out_file)
+with open('{}.txt'.format(out_file), 'w') as o:
+    o.write('model\tsemantic_variable\tcorrelation\n')
+    for var_i, var in enumerate(variables):
+        color = palette[var]
+        results = [evaluations[model][var] for model in models_sorted]
+        xs = [i+corrections[var_i] for i in range(len(models_sorted))]
+        bars = [numpy.nanmean(res) for res in results]
+        ### bars
+        ax.bar(xs, bars, width=0.09, color=color, zorder=2)
+        for res, model in zip(results, models_sorted):
+            o.write('{}\t{}\t{}\n'.format(model, var, round(numpy.nanmean(res), 3)))
+        ### scatters
+        for x, res in zip(xs, results):
+            ax.scatter([x for i in range(len(res))], [max(0, r) for r in res], color=color, alpha=0.5, 
+                        edgecolors='black',
+                        zorder=2.5,)
 ### dummy to do the legend
 
 for col_name, pal in palette.items():
@@ -139,11 +308,12 @@ ax.set_xticklabels([m.replace('-', '\n') for m in models_sorted], fontsize=23, h
 ax.legend(fontsize=15)
 ax.set_ylabel('Pearson correlation', fontsize=20, fontweight='bold')
 
-pyplot.savefig(os.path.join(plot_folder, 'correlation_results_basic_regression.jpg'), dpi=300)
+pyplot.savefig('{}.jpg'.format(out_file), dpi=300)
 pyplot.clf()
 pyplot.close()
 
 ### polysemes
+print('evaluating on polysemy')
 test_words = list(set([phr.split()[-1] for phr in list(vecs.keys())]))
 ### reading verb lists
 abs_verbs = list()
@@ -166,9 +336,14 @@ for model, vecs in tqdm(model_data.items()):
         for word in test_words:
             train_model = [vecs[k] for k in sorted(vecs.keys()) if k.split()[-1]!=word]
             train_human = [ratings[k] for k in sorted(ratings.keys()) if k.split()[-1]!=word]
-            #ridge = RidgeCV(alphas=(0.01, 0.1, 1.0, 10.0, 100.0, 1000.))
-            ridge = LinearRegression()
-            ridge.fit(train_model, train_human)
+            if standardize:
+                ### scaler is fit on train ONLY to avoid circularity
+                model_scaler = sklearn.preprocessing.StandardScaler().fit(train_model)
+                human_scaler = sklearn.preprocessing.StandardScaler().fit(numpy.array(train_human).reshape(-1, 1))
+                train_model = model_scaler.transform(train_model)
+                train_human = human_scaler.transform(numpy.array(train_human).reshape(-1,1))
+            regression = load_regression(regression_model)
+            regression.fit(train_model, train_human)
             test_keys = [phr for phr in vecs.keys() if phr.split()[-1]==word]
             conc_phr = [phr for phr in test_keys if phr.split()[0] in conc_verbs]
             abs_phr = [phr for phr in test_keys if phr.split()[0] in abs_verbs]
@@ -176,8 +351,11 @@ for model, vecs in tqdm(model_data.items()):
             corrs = list()
             for test in tests:
                 test_model = [vecs[k] for k in test]
-                predictions = ridge.predict(test_model)
                 test_human = [ratings[k] for k in test]
+                if standardize:
+                    test_model = model_scaler.transform(test_model)
+                    test_human = human_scaler.transform(numpy.array(test_human).reshape(-1,1))
+                predictions = regression.predict(test_model)
                 right = 0.
                 ### right
                 for idx_one, idx_two in [(0, 0), (1, 1)]:
@@ -191,7 +369,7 @@ for model, vecs in tqdm(model_data.items()):
                 else:
                     acc = 0.
                 corrs.append(acc)
-            evaluations[model][variable].append(numpy.average(corrs))
+            evaluations[model][variable].append(numpy.nanmean(corrs))
 
 for model, model_res in evaluations.items():
     evaluations[model]['average'] = [val for v in model_res.values() for val in v]
@@ -205,29 +383,41 @@ variables = list(human_data.keys()) + ['average']
 #models = sorted(model_data.keys())
 corrections = [i/10 for i in range(len(variables))]
 
+out_file = os.path.join(poly_folder, 'pairwise_polysemy_results_{}'.format(regression_model))
+if standardize:
+    out_file = '{}_standardized'.format(out_file)
+
 fig, ax = pyplot.subplots(constrained_layout=True, figsize=(22,10))
-for var_i, var in enumerate(variables):
-    color = palette[var]
-    results = [evaluations[model][var] for model in models_sorted]
-    xs = [i+corrections[var_i] for i in range(len(models_sorted))]
-    bars = [numpy.average(res) for res in results]
-    ### bars
-    ax.bar(xs, bars, width=0.09, color=color, zorder=2)
-    for m_i, m in enumerate(models_sorted):
-        p = p_values[(m, var)]
-        if p < 0.05:
-            ax.scatter([m_i+corrections[var_i]], [0.05], marker='*', color='black', zorder=2.5)
-        if p < 0.005:
-            ax.scatter([m_i+corrections[var_i]], [0.075], marker='*', color='black', zorder=2.5)
-        if p < 0.0005:
-            ax.scatter([m_i+corrections[var_i]], [0.1], marker='*', color='black', zorder=2.5)
-    '''
-    ### scatters
-    for x, res in zip(xs, results):
-        ax.scatter([x for i in range(len(res))], [max(0, r) for r in res], color=color, alpha=0.5, 
-                    edgecolors='black',
-                    zorder=2.5,)
-    '''
+with open('{}.txt'.format(out_file), 'w') as o:
+    o.write('model\tsemantic_variable\tpairwise_accuracy\tp-value\n')
+    for var_i, var in enumerate(variables):
+        color = palette[var]
+        results = [evaluations[model][var] for model in models_sorted]
+        xs = [i+corrections[var_i] for i in range(len(models_sorted))]
+        bars = [numpy.nanmean(res) for res in results]
+        ### bars
+        ax.bar(xs, bars, width=0.09, color=color, zorder=2)
+        for m_i, m in enumerate(models_sorted):
+            p = p_values[(m, var)]
+            o.write('{}\t{}\t{}\t'.format(m, var, round(numpy.nanmean(results[m_i]), 3)))
+            o.write('{}\n'.format(round(numpy.average(p), 4)))
+            if var == 'average':
+                p_color = 'white'
+            else:
+                p_color = 'black'
+            if p < 0.05:
+                ax.scatter([m_i+corrections[var_i]], [0.05], marker='*', color=p_color, zorder=2.5)
+            if p < 0.005:
+                ax.scatter([m_i+corrections[var_i]], [0.075], marker='*', color=p_color, zorder=2.5)
+            if p < 0.0005:
+                ax.scatter([m_i+corrections[var_i]], [0.1], marker='*', color=p_color, zorder=2.5)
+        '''
+        ### scatters
+        for x, res in zip(xs, results):
+            ax.scatter([x for i in range(len(res))], [max(0, r) for r in res], color=color, alpha=0.5, 
+                        edgecolors='black',
+                        zorder=2.5,)
+        '''
 ax.hlines([0.5], xmin=-0.1, color='black', xmax=len(variables)+.1, linestyles='dashdot', zorder=2.5)
 ax.hlines([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8], xmin=-0.1, color='grey', alpha=0.4, xmax=len(variables)+.1, linestyles='dashdot', zorder=2.5)
 ### dummy to do the legend
@@ -240,6 +430,6 @@ ax.set_xticklabels([m.replace('-', '\n') for m in models_sorted], fontsize=23, h
 ax.legend(fontsize=15)
 ax.set_ylabel('pairwise sense discrimination accuracy', fontsize=20, fontweight='bold')
 
-pyplot.savefig(os.path.join(plot_folder, 'pairwise_polysemy_results_basic_regression.jpg'), dpi=300)
+pyplot.savefig('{}.jpg'.format(out_file), dpi=300)
 pyplot.clf()
 pyplot.close()
