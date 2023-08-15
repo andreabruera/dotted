@@ -195,13 +195,6 @@ for variable_selection in [['imageability', 'concreteness', 'familiarity'], ['to
                       )
         pyplot.xticks(fontsize=15)
         pyplot.yticks(fontsize=15)
-        title = 'Errors in prediction made by {}'.format(model)
-        ax.set_title(
-                     title, 
-                     fontsize=23,
-                     fontweight='bold',
-                     pad=20,
-                     )
         ### dummy to do the legend
 
         for col_name in variable_selection:
@@ -277,7 +270,14 @@ for variable_selection in [['imageability', 'concreteness', 'familiarity'], ['to
                             )
 
         ax.legend(fontsize=20)
-        marker = 'dimensions' if 'concreteness' in variable_selection else 'senses'
+        marker = 'semantic_dimensions' if 'concreteness' in variable_selection else 'senses'
+        title = 'Errors in prediction made by {} - {}'.format(model.replace('_', ' ').replace(' mid four', ' (mid four layers)'), marker)
+        ax.set_title(
+                     title, 
+                     fontsize=23,
+                     fontweight='bold',
+                     pad=20,
+                     )
         file_path = os.path.join(
                                  errors_folder,
                                  '{}_{}_errors.jpg'.format(model, marker),
