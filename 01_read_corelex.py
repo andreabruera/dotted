@@ -7,6 +7,8 @@ import re
 
 from matplotlib import pyplot
 
+from utils import read_selected_nouns
+
 corelex_folder = os.path.join('data', 'corelex')
 assert os.path.exists(corelex_folder)
 
@@ -40,6 +42,7 @@ with open(os.path.join(corelex_folder, 'corelex_nouns')) as i:
         if line[1] in polysemes:
             candidates.append(line[0])
 
+
 pkls = 'pickles'
 
 freqs_file = os.path.join(pkls, 'freqs.pkl')
@@ -57,22 +60,9 @@ for k, v in final_freqs.items():
             noun_freqs[w] = v
         else:
             noun_freqs[w] += v
-counter = 0
-nouns = list()
-with open('phrases.txt') as i:
-    for l in i:
-        if counter == 0:
-            counter += 1
-            continue
-        if l[0] == '#':
-            print(l)
-            continue
-        line = l.strip().split('\t')
-        #print(line)
-        assert len(line) in [5, 6]
-       # concrete_list.extend(line[1:3])
-       # abstract_list.extend(line[3:])
-        nouns.append(line[0])
+
+
+nouns = read_selected_nouns()
 for n in nouns:
     assert n in candidates
 
@@ -138,3 +128,14 @@ ax.bar([0.],
         )
 ax.legend(fontsize=20)
 pyplot.savefig(os.path.join('plots', 'polysemes_frequencies.jpg'))
+
+### writing to file the candidates
+candidates_path = os.path.join('data', 'corelex_candidate_nouns.txt')
+threshold = numpy.quantile(polysemes_freqs, q=0.9)
+with open(candidates_path, 'w') as o:
+    o.write('candidate obtained from Corelex\tfrequency in pUkWac\n')
+    for l in candidates:
+        if l in noun_freqs.keys():
+            freq = noun_freqs[l]
+            if freq > threshold:
+                o.write('{}\t{}\n'.format(l, freq))

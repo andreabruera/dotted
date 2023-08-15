@@ -7,9 +7,6 @@ from tqdm import tqdm
 
 from utils import read_pukwac
 
-out_folder = 'sentences'
-os.makedirs(out_folder, exist_ok=True)
-
 def sensible_finder(all_args):
     file_path = all_args[0]
     stimuli = all_args[1]
@@ -72,6 +69,33 @@ def sensible_finder(all_args):
 
     return ent_sentences
 
+parser = args.ArgumentParser()
+parser.add_argument(
+                    '--pukwac_path', 
+                    required=True,
+                    help='path to the folder containing '
+                    'the files for the pUkWac dataset'
+                    )
+args = parser.parse_args()
+
+path = args.pukwac_path
+try:
+    assert os.path.exists(path)
+except AssertionError:
+    raise RuntimeError('The path provided for pUkWac does not exist!')
+paths = [os.path.join(path, f) for f in os.listdir(path)]
+try:
+    assert len(paths) == 5
+except AssertionError:
+    raise RuntimeError('pUkWac is composed by 5 files, but '
+                       'the provided folder contains more/less'
+                       )
+
+out_folder = 'sentences'
+os.makedirs(out_folder, exist_ok=True)
+
+assert os.path.exists('phrases.txt')
+
 with open('phrases.txt') as i:
     nouns_and_verbs = [l.strip().split('\t') for l in i.readlines()][1:]
 stimuli = list()
@@ -81,17 +105,7 @@ for l in nouns_and_verbs:
     for v in verbs:
         stimuli.append('{} {}'.format(v, noun))
 
-path = os.path.join(
-                    '/', 
-                    'import',
-                    'cogsci', 
-                    'andrea', 
-                    'dataset', 
-                    'corpora', 
-                    'PukWaC'
-                    )
-paths = [os.path.join(path, f) for f in os.listdir(path)]
-
+### debugging
 #for file_path in paths:
 #    sensible_finder([file_path, stimuli])
 

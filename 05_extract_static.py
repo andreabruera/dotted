@@ -37,13 +37,33 @@ def coocs_counter(all_args):
                 counter.update(1)
     return coocs
 
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+                    '--pukwac_path', 
+                    required=True,
+                    help='path to the folder containing '
+                    'the files for the pUkWac dataset'
+                    )
+args = parser.parse_args()
+path = args.pukwac_path
+try:
+    assert os.path.exists(path)
+except AssertionError:
+    raise RuntimeError('The path provided for pUkWac does not exist!')
+paths = [os.path.join(path, f) for f in os.listdir(path)]
+try:
+    assert len(paths) == 5
+except AssertionError:
+    raise RuntimeError('pUkWac is composed by 5 files, but '
+                       'the provided folder contains more/less'
+                       )
+
 full_stimuli = list()
 
 sentences_folder = 'sentences'
 for f in os.listdir(sentences_folder):
     full_stimuli.append(f.split('.')[0])
-path = os.path.join('/', 'import', 'cogsci', 'andrea', 'dataset', 'corpora', 'PukWaC')
-paths = [os.path.join(path, f) for f in os.listdir(path)]
 
 collector = {'count' : dict(), 'fasttext' : dict(), 'w2v' : dict()}
 
@@ -131,14 +151,11 @@ total = sum([final_freqs[w] for w in conc_vocab])
 collector['count'] = {k : numpy.average([[final_coocs[vocab[k_word]][vocab[other]] for other in conc_vocab] for k_word in k.split()], axis=0) for k in full_stimuli}
 collector['count-pmi'] = {k : numpy.average(
                             [[
-                              #max(
                                  numpy.log2(
                                  (
                                   max(final_coocs[vocab[k_word]][vocab[other]], 0.1) / total
                                   ) / (
                                        final_freqs[k_word] * (final_freqs[other]**0.75)
-                                 #      )
-                                 #          ), #0) 
                                  )) for other in conc_vocab] for k_word in k.split()],
                              axis=0) for k in full_stimuli}
 collector['count-log'] = {k : [numpy.log(v) if v!=0. else 0. for v in vec] for k, vec in collector['count'].items()}
@@ -146,7 +163,7 @@ collector['count-log'] = {k : [numpy.log(v) if v!=0. else 0. for v in vec] for k
 print('loaded!')
 
 print('loading fasttext...')
-ft = fasttext.load_model(os.path.join('pickles', 'cc.en.300.bin'))
+ft = fasttext.load_model(os.path.join('models', 'cc.en.300.bin'))
 print('loaded!')
 
 print('loading word2vec...')

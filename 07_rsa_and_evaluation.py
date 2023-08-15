@@ -46,7 +46,10 @@ palette = {
            'average' : '#000000',
            }
 #models_sorted = ['count', 'count-log', 'count-pmi', 'w2v', 'fasttext', 'roberta-large', 'gpt2-xl', 'opt',]
-models_sorted = ['count', 'w2v', 'gpt2-xl',]
+models_sorted = ['count', 'w2v', 'gpt2-xl_mid_four',]
+#models_sorted = ['count', 'w2v', 'gpt2-xl_low_four', 'gpt2-xl_mid_four', 'gpt2-xl_top_four']
+#models_sorted = ['count', 'w2v', 'OPT_low_four', 'OPT_mid_four', 'OPT_top_four']
+#models_sorted = ['count', 'w2v', 'roberta-large_low_four', 'roberta-large_mid_four', 'roberta-large_top_four']
 
 plot_folder = 'plots'
 os.makedirs(plot_folder, exist_ok=True)
@@ -67,7 +70,10 @@ for f in os.listdir(folder):
         vecs = [l.strip().split('\t') for l in i.readlines()][1:]
         assert len(vecs) == 100
         vecs = {l[0] : numpy.array(l[1:], dtype=numpy.float64) for l in vecs}
-        key = f.split('_')[0].lower()
+        if 'gpt' not in f and 'OPT' not in f and 'roberta' not in f:
+            key = f.split('_')[0].lower()
+        else:
+            key = f.replace('_vectors.tsv', '')
         data[key] = vecs
 
 ### reducing to models actually available
@@ -316,7 +322,13 @@ for col_name, pal in palette.items():
 
 ax.hlines([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], xmin=-0.1, color='grey', alpha=0.4, xmax=len(models_sorted)+.1, linestyles='dashdot', zorder=2.5)
 ax.set_xticks([i+(len(corrections)/20) for i in range(len(sims.keys()))])
-ax.set_xticklabels([m.replace('-', '\n') for m in models_sorted], fontsize=23, ha='center', rotation=45, fontweight='bold')
+ax.set_xticklabels(
+                   [m.replace('_mid_four', '\n(mid four layers)') for m in models_sorted], 
+                   fontsize=23, 
+                   ha='center', 
+                   #rotation=45, 
+                   fontweight='bold'
+                   )
 pyplot.yticks(fontsize=20)
 ax.legend(fontsize=15)
 ax.set_ylabel('Pearson correlation', fontsize=20, fontweight='bold')
@@ -332,7 +344,7 @@ test_words = list(set([phr.split()[-1] for phr in list(vecs.keys())]))
 abs_verbs = list()
 conc_verbs = list()
 counter = 0
-with open('phrases.txt') as i:
+with open(os.path.join('data', 'phrases.txt')) as i:
     for l in i:
         if counter == 0:
             counter += 1
@@ -442,7 +454,13 @@ for col_name, pal in palette.items():
     ax.bar([0.], [0.], color=pal, label=col_name)
 
 ax.set_xticks([i+(len(corrections)/20) for i in range(len(sims.keys()))])
-ax.set_xticklabels([m.replace('-', '\n') for m in models_sorted], fontsize=23, ha='center', rotation=45, fontweight='bold')
+ax.set_xticklabels(
+                   [m.replace('_mid_four', '\n(mid four layers)') for m in models_sorted], 
+                   fontsize=23, 
+                   ha='center', 
+                   #rotation=45, 
+                   fontweight='bold'
+                   )
 pyplot.yticks(fontsize=20)
 ax.legend(fontsize=15)
 ax.set_ylabel('pairwise sense discrimination accuracy', fontsize=20, fontweight='bold')

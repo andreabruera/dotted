@@ -1,10 +1,11 @@
+import argparse
 import multiprocessing
 import os
 import pickle
 
 from tqdm import tqdm
 
-from utils import read_brysbaert_norms, read_nouns, read_pos, read_pukwac
+from utils import read_brysbaert_norms, read_candidate_nouns, read_selected_nouns, read_pos, read_pukwac
 
 def counter(file_path):
     word_counter = dict()
@@ -42,6 +43,15 @@ def coocs_counter(all_args):
                 counter.update(1)
     return coocs
 
+parser = argparse.ArgumentParser()
+parser.add_argument(
+                    '--pukwac_path', 
+                    required=True,
+                    help='path to the folder containing '
+                    'the files for the pUkWac dataset'
+                    )
+args = parser.parse_args()
+
 conc, val, aro, dom = read_brysbaert_norms()
 pos = read_pos()
 for w in conc.keys():
@@ -56,10 +66,26 @@ assert conc_verbs[-1][1] > 3.5
 
 abs_verbs = [w[0] for w in abs_verbs if len(w[0])>=4 and len(w[0])<=8]
 conc_verbs = [w[0] for w in conc_verbs if len(w[0])>=4 and len(w[0])<=8]
-nouns = [w for w in read_nouns() if (len(w)>=6 and len(w)<=9 and pos[w]=='Noun')]
+#nouns = [w for w in read_candidate_nouns() if (len(w)>=6 and len(w)<=9 and pos[w]=='Noun')]
+nouns = [w for w in read_candidate_nouns() if (len(w)>=6 and len(w)<=9 and w in pos.keys())]
+print(len(nouns))
+selected_nouns = read_selected_nouns()
+for w in selected_nouns:
+    assert w in nouns
 
-path = os.path.join('/', 'import', 'cogsci', 'andrea', 'dataset', 'corpora', 'PukWaC')
+#path = os.path.join('/', 'import', 'cogsci', 'andrea', 'dataset', 'corpora', 'PukWaC')
+path = args.pukwac_path
+try:
+    assert os.path.exists(path)
+except AssertionError:
+    raise RuntimeError('The path provided for pUkWac does not exist!')
 paths = [os.path.join(path, f) for f in os.listdir(path)]
+try:
+    assert len(paths) == 5
+except AssertionError:
+    raise RuntimeError('pUkWac is composed by 5 files, but '
+                       'the provided folder contains more/less'
+                       )
 
 pkls = 'pickles'
 
@@ -150,8 +176,9 @@ for k, v in all_relevant.items():
 
 sorted_nouns = sorted(final_relevant.items(), key=lambda item : item[1])
 
-for k, v in sorted_nouns:
-    print([k, v])
+### debugging
+#for k, v in sorted_nouns:
+#    print([k, v])
 
 ### collecting co-occurrences
 
@@ -194,7 +221,7 @@ conc_verbs = [v for v in conc_verbs if v in items_counter.keys()]
         
 nouns_counter = {w : {'abstract' : {v : items_counter[v][w] for v in abs_verbs}, 'concrete' : {v : items_counter[v][w] for v in conc_verbs}} for w in nouns}
 
-with open('pukwac_top_100_verb_noun_coocs.txt', 'w') as o:
+with open(os.path.join('data', 'pukwac_corelex_candidates_top_100_verb_coocs.txt'), 'w') as o:
     o.write('noun\tverb\tcase\tfrequency\n')
     for w, w_dict in nouns_counter.items():
         for case, case_dict in w_dict.items():

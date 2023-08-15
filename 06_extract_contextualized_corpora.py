@@ -11,7 +11,6 @@ import torch
 from scipy import stats
 from tqdm import tqdm
 from transformers import AutoModel, AutoTokenizer, AutoModelForMaskedLM, AutoModelWithLMHead, OPTModel
-#from utils.general_utils import arguments, evaluate_iteration, levenshtein, load_subject_data, load_runs, prepare_evaluation_data, read_events, Experiment
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -19,10 +18,23 @@ parser.add_argument(
                     choices=['0', '1', '2'],
                     required=True
                     )
+parser.add_argument(
+                    '--computational_model',
+                    choices=['OPT', 'gpt2-xl', 'roberta-large'],
+                    default='gpt2-xl',
+                    )
+parser.add_argument(
+                    '--layer',
+                    choices=[
+                             'input_layer', 
+                             'low_four', 
+                             'mid_four', 
+                             'top_four', 
+                             'top_twelve'
+                             ],
+                    required=True
+                    )
 args = parser.parse_args()
-
-args.computational_model = 'roberta-large'
-args.layer = 'top_four'
 
 all_sentences = dict()
 sentences_folder = 'sentences'
@@ -43,16 +55,10 @@ if args.computational_model == 'gpt2-xl':
 if args.computational_model == 'roberta-large':
     short_name = 'roberta-large'
     model_name = 'roberta-large'
-if args.computational_model == 'gpt2':
-    model_name = 'GroNLP/gpt2-medium-italian-embeddings'
-    short_name = 'gpt2_{}'.format(args.layer)
-if args.computational_model == 'xlm-roberta-large':
-    model_name = 'xlm-roberta-large'
-    short_name = 'xlm-roberta-large'
 cuda_device = 'cuda:{}'.format(args.cuda)
 
 
-if 'gpt' in model_name or 'GPT' in model_name:
+if 'gpt' in model_name:
     model = AutoModel.from_pretrained(model_name).to(cuda_device)
     tokenizer = AutoTokenizer.from_pretrained(model_name, sep_token='[PHR]')
     required_shape = model.embed_dim
@@ -73,6 +79,23 @@ else:
 
 print('Dimensionality: {}'.format(required_shape))
 print('Number of layers: {}'.format(n_layers))
+if args.layer == 'input_layer':
+    layer_start = 0
+    layer_end = 1
+if args.layer == 'low_four':
+    layer_start = 1
+    ### outputs has at dimension 0 the final output
+    layer_end = 5
+if args.layer == 'mid_four':
+    layer_start = int(n_layers/2)-2
+    layer_end = int(n_layers/2)+3
+if args.layer == 'top_four':
+    layer_start = -4
+    ### outputs has at dimension 0 the final output
+    layer_end = n_layers+1
+if args.layer == 'top_twelve':
+    layer_start = -12
+    layer_end = n_layers+1
 
 max_len = max_len - 10
 random.seed(11)
@@ -155,24 +178,7 @@ with tqdm() as pbar:
                         continue
                     mention = hidden_states[:, beg:end, :]
                     mention = numpy.average(mention, axis=1)
-                    if args.layer == 'input_layer':
-                        layer_start = 0
-                        layer_end = 1
-                    if args.layer == 'low_four':
-                        layer_start = 1
-                        ### outputs has at dimension 0 the final output
-                        layer_end = 5
-                    if args.layer == 'mid_four':
-                        layer_start = int(n_layers/2)-2
-                        layer_end = int(n_layers/2)+3
-                    if args.layer == 'top_four':
-                        layer_start = -4
-                        ### outputs has at dimension 0 the final output
-                        layer_end = n_layers+1
-                    if args.layer == 'top_twelve':
-                        layer_start = -12
-                        layer_end = n_layers+1
-                        ### outputs has at dimension 0 the final output
+                    ### outputs has at dimension 0 the final output
                     mention = mention[layer_start:layer_end, :]
 
                     mention = numpy.average(mention, axis=0)

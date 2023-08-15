@@ -74,18 +74,36 @@ def read_pos(prune=False):
             pos[line[0]] = line[9]
     return pos
 
-def read_nouns():
+def read_candidate_nouns():
+    ### reading the candidate nouns
+    counter = 0
     nouns = list()
-    folder = os.path.join('data', 'third_pass')
+    with open(os.path.join('data', 'corelex_candidate_nouns.txt')) as i:
+        for l in i:
+            if counter == 0:
+                counter += 1
+                continue
+            line = l.strip().split('\t')
+            assert len(line) == 2
+            nouns.append(line[0])
+    return nouns
 
-    for f in os.listdir(folder):
-        counter = 0
-        with open(os.path.join(folder, f)) as i:
-            for l in i:
-                if counter == 0:
-                    counter += 1
-                    continue
-                line = l.strip().split('\t')
-                noun = line[0]
-                nouns.append(noun)
-    return sorted(list(set(nouns)))
+def read_selected_nouns():
+    ### reading the selected nouns
+    counter = 0
+    nouns = list()
+    with open(os.path.join('data', 'phrases.txt')) as i:
+        for l in i:
+            if counter == 0:
+                counter += 1
+                continue
+            if l[0] == '#':
+                print(l)
+                continue
+            line = l.strip().split('\t')
+            #print(line)
+            assert len(line) in [5, 6]
+           # concrete_list.extend(line[1:3])
+           # abstract_list.extend(line[3:])
+            nouns.append(line[0])
+    return nouns
