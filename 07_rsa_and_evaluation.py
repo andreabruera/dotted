@@ -95,7 +95,7 @@ ax.set_xticklabels(
                    )
 ax.set_yticks(range(len(sims.keys())),)
 ax.set_yticklabels(
-                   [m.replace('_mid_four', '\n(mid four\nlayers)') for m in models_sorted], 
+                   [m.replace('_mid_four', '\n(mid four layers)') for m in models_sorted], 
                    va='center', 
                    fontweight='bold'
                    )
