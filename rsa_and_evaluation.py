@@ -45,7 +45,8 @@ palette = {
            'touch' : '#0072B2',
            'average' : '#000000',
            }
-models_sorted = ['count', 'count-log', 'count-pmi', 'w2v', 'fasttext', 'roberta-large', 'gpt2-xl', 'opt',]
+#models_sorted = ['count', 'count-log', 'count-pmi', 'w2v', 'fasttext', 'roberta-large', 'gpt2-xl', 'opt',]
+models_sorted = ['count', 'w2v', 'gpt2-xl',]
 
 plot_folder = 'plots'
 os.makedirs(plot_folder, exist_ok=True)
@@ -68,6 +69,9 @@ for f in os.listdir(folder):
         vecs = {l[0] : numpy.array(l[1:], dtype=numpy.float64) for l in vecs}
         key = f.split('_')[0].lower()
         data[key] = vecs
+
+### reducing to models actually available
+data = {k : data[k] for k in models_sorted}
 
 ### model rsa
 ### pairwise similarities
@@ -277,7 +281,10 @@ variables = list(human_data.keys()) + ['average']
 #models = sorted(model_data.keys())
 corrections = [i/10 for i in range(len(variables))]
 
-fig, ax = pyplot.subplots(constrained_layout=True, figsize=(22,10))
+if len(models_sorted) > 3:
+    fig, ax = pyplot.subplots(constrained_layout=True, figsize=(22,10))
+else:
+    fig, ax = pyplot.subplots(constrained_layout=True, figsize=(12,10))
 out_file = os.path.join(corr_folder, 'correlation_results_{}'.format(regression_model))
 if standardize:
     out_file = '{}_standardized'.format(out_file)
@@ -289,12 +296,17 @@ with open('{}.txt'.format(out_file), 'w') as o:
         xs = [i+corrections[var_i] for i in range(len(models_sorted))]
         bars = [numpy.nanmean(res) for res in results]
         ### bars
-        ax.bar(xs, bars, width=0.09, color=color, zorder=2)
+        ax.bar(
+               xs, 
+               bars, 
+               width=0.09, 
+               color=color, 
+               zorder=2)
         for res, model in zip(results, models_sorted):
             o.write('{}\t{}\t{}\n'.format(model, var, round(numpy.nanmean(res), 3)))
         ### scatters
         for x, res in zip(xs, results):
-            ax.scatter([x for i in range(len(res))], [max(0, r) for r in res], color=color, alpha=0.5, 
+            ax.scatter([x+(random.choice(range(-25, 25))/1000) for i in range(len(res))], [max(0, r) for r in res], color=color, alpha=0.5, 
                         edgecolors='black',
                         zorder=2.5,)
 ### dummy to do the legend
@@ -302,9 +314,10 @@ with open('{}.txt'.format(out_file), 'w') as o:
 for col_name, pal in palette.items():
     ax.bar([0.], [0.], color=pal, label=col_name)
 
-ax.hlines([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], xmin=-0.1, color='grey', alpha=0.4, xmax=len(variables)+.1, linestyles='dashdot', zorder=2.5)
+ax.hlines([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], xmin=-0.1, color='grey', alpha=0.4, xmax=len(models_sorted)+.1, linestyles='dashdot', zorder=2.5)
 ax.set_xticks([i+(len(corrections)/20) for i in range(len(sims.keys()))])
 ax.set_xticklabels([m.replace('-', '\n') for m in models_sorted], fontsize=23, ha='center', rotation=45, fontweight='bold')
+pyplot.yticks(fontsize=20)
 ax.legend(fontsize=15)
 ax.set_ylabel('Pearson correlation', fontsize=20, fontweight='bold')
 
@@ -387,7 +400,10 @@ out_file = os.path.join(poly_folder, 'pairwise_polysemy_results_{}'.format(regre
 if standardize:
     out_file = '{}_standardized'.format(out_file)
 
-fig, ax = pyplot.subplots(constrained_layout=True, figsize=(22,10))
+if len(models_sorted) > 3:
+    fig, ax = pyplot.subplots(constrained_layout=True, figsize=(22,10))
+else:
+    fig, ax = pyplot.subplots(constrained_layout=True, figsize=(12,10))
 with open('{}.txt'.format(out_file), 'w') as o:
     o.write('model\tsemantic_variable\tpairwise_accuracy\tp-value\n')
     for var_i, var in enumerate(variables):
@@ -418,8 +434,8 @@ with open('{}.txt'.format(out_file), 'w') as o:
                         edgecolors='black',
                         zorder=2.5,)
         '''
-ax.hlines([0.5], xmin=-0.1, color='black', xmax=len(variables)+.1, linestyles='dashdot', zorder=2.5)
-ax.hlines([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8], xmin=-0.1, color='grey', alpha=0.4, xmax=len(variables)+.1, linestyles='dashdot', zorder=2.5)
+ax.hlines([0.5], xmin=-0.1, color='black', xmax=len(models_sorted)+.1, linestyles='dashdot', zorder=2.5)
+ax.hlines([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8], xmin=-0.1, color='grey', alpha=0.4, xmax=len(models_sorted)+.1, linestyles='dashdot', zorder=2.5)
 ### dummy to do the legend
 
 for col_name, pal in palette.items():
@@ -427,6 +443,7 @@ for col_name, pal in palette.items():
 
 ax.set_xticks([i+(len(corrections)/20) for i in range(len(sims.keys()))])
 ax.set_xticklabels([m.replace('-', '\n') for m in models_sorted], fontsize=23, ha='center', rotation=45, fontweight='bold')
+pyplot.yticks(fontsize=20)
 ax.legend(fontsize=15)
 ax.set_ylabel('pairwise sense discrimination accuracy', fontsize=20, fontweight='bold')
 
