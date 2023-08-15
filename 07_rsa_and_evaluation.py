@@ -87,9 +87,18 @@ corrs = [[round(scipy.stats.pearsonr(sims[simz_one], sims[simz_two])[0], 2) for 
 fig, ax = pyplot.subplots(constrained_layout=True)
 ax.imshow(corrs)
 ax.set_xticks(range(len(sims.keys())),)
-ax.set_xticklabels([m.replace('-', '\n') for m in models_sorted], ha='center', rotation=45, fontweight='bold')
+ax.set_xticklabels(
+                   [m.replace('_mid_four', '\n(mid four layers)') for m in models_sorted], 
+                   ha='center', 
+                   va='top',
+                   fontweight='bold'
+                   )
 ax.set_yticks(range(len(sims.keys())),)
-ax.set_yticklabels([m.replace('-', '\n') for m in models_sorted], va='center', fontweight='bold')
+ax.set_yticklabels(
+                   [m.replace('_mid_four', '\n(mid four\nlayers)') for m in models_sorted], 
+                   va='center', 
+                   fontweight='bold'
+                   )
 for i in range(len(sims.keys())):
     for i_two in range(len(sims.keys())):
         ax.text(i_two, i, corrs[i][i_two], ha='center', va='center', color='white')
