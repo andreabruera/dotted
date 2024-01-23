@@ -20,7 +20,7 @@ parser.add_argument(
                     )
 parser.add_argument(
                     '--computational_model',
-                    choices=['OPT', 'gpt2-xl', 'roberta-large'],
+                    choices=['OPT1.3', 'OPT2.7', 'OPT6.7', 'gpt2-xl', 'roberta-large'],
                     default='gpt2-xl',
                     )
 parser.add_argument(
@@ -46,9 +46,9 @@ for f in os.listdir(sentences_folder):
         disordered_lines = random.sample(lines, k=len(lines))
         all_sentences[f.split('.')[0]] = disordered_lines
 
-if args.computational_model == 'OPT':
-    short_name = 'OPT'
-    model_name = 'facebook/opt-1.3b'
+if 'OPT' in args.computational_model:
+    short_name = args.computational_model
+    model_name = 'facebook/opt-{}b'.format(args.computational_model.replace('OPT', ''))
 if args.computational_model == 'gpt2-xl':
     short_name = 'gpt2-xl'
     model_name = 'gpt2-xl'

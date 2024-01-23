@@ -61,9 +61,9 @@ palette = {
 #models_sorted = ['count', 'w2v', 'gpt2-xl_low_four', 'gpt2-xl_mid_four', 'gpt2-xl_top_four']
 models_sorted = [#'count', #'w2v', 
                  'gpt2-xl_mid_four', 
-                 'OPT_low_four', 
-                 'OPT_mid_four', 
-                 'OPT_top_four', 
+                 'OPT1.3_mid_four', 
+                 'OPT2.7_mid_four', 
+                 #'OPT_top_four', 
                  ]
 #models_sorted = ['count', 'w2v', 'roberta-large_low_four', 'roberta-large_mid_four', 'roberta-large_top_four']
 
