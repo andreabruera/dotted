@@ -43,14 +43,6 @@ def coocs_counter(all_args):
                 counter.update(1)
     return coocs
 
-parser = argparse.ArgumentParser()
-parser.add_argument(
-                    '--pukwac_path', 
-                    required=True,
-                    help='path to the folder containing '
-                    'the files for the pUkWac dataset'
-                    )
-args = parser.parse_args()
 
 conc, val, aro, dom = read_brysbaert_norms()
 pos = read_pos()
@@ -72,6 +64,15 @@ print(len(nouns))
 selected_nouns = read_selected_nouns()
 for w in selected_nouns:
     assert w in nouns
+import pdb; pdb.set_trace()
+parser = argparse.ArgumentParser()
+parser.add_argument(
+                    '--pukwac_path', 
+                    required=True,
+                    help='path to the folder containing '
+                    'the files for the pUkWac dataset'
+                    )
+args = parser.parse_args()
 
 #path = os.path.join('/', 'import', 'cogsci', 'andrea', 'dataset', 'corpora', 'PukWaC')
 path = args.pukwac_path

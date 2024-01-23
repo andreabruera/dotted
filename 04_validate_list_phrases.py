@@ -65,6 +65,7 @@ print('\n\tlenghts\n')
 abstract_lengths, concrete_lengths = [len(v) for n, v in stimuli['abstract']], [len(v) for n, v in stimuli['concrete']]
 
 stat_diff = scipy.stats.ttest_ind(concrete_lengths, abstract_lengths)
+#stat_diff = scipy.stats.ttest_ind(concrete_lengths, abstract_lengths)
 print('concrete: {}'.format(numpy.average(concrete_lengths)))
 print('abstract: {}'.format(numpy.average(abstract_lengths)))
 print(stat_diff)

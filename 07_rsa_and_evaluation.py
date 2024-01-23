@@ -45,8 +45,18 @@ palette = {
            'touch' : '#0072B2',
            'average' : '#000000',
            }
-#models_sorted = ['count', 'count-log', 'count-pmi', 'w2v', 'fasttext', 'roberta-large', 'gpt2-xl', 'opt',]
-models_sorted = ['count', 'w2v', 'gpt2-xl_mid_four',]
+models_sorted = [
+                 'count', 
+                 'count-log', 
+                 'count-pmi', 
+                 #'w2v', 
+                 'fasttext', 
+                 #'roberta-large',
+                 #'gpt2-xl', 
+                 #'opt',
+                 'gpt2-xl_mid_four', 
+                 ]
+#models_sorted = ['count', 'w2v', 'gpt2-xl_mid_four',]
 #models_sorted = ['count', 'w2v', 'gpt2-xl_low_four', 'gpt2-xl_mid_four', 'gpt2-xl_top_four']
 #models_sorted = ['count', 'w2v', 'OPT_low_four', 'OPT_mid_four', 'OPT_top_four']
 #models_sorted = ['count', 'w2v', 'roberta-large_low_four', 'roberta-large_mid_four', 'roberta-large_top_four']
