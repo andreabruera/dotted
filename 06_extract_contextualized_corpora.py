@@ -20,7 +20,17 @@ parser.add_argument(
                     )
 parser.add_argument(
                     '--computational_model',
-                    choices=['OPT1.3', 'OPT2.7', 'OPT6.7', 'gpt2-xl', 'roberta-large'],
+                    choices=[
+                             'opt-125m', 
+                             'opt-350m', 
+                             'opt-1.3b', 
+                             'opt-2.7b', 
+                             'opt-6.7b', 
+                             'opt-13b', 
+                             'gpt2-large',
+                             'gpt2-xl', 
+                             'roberta-large',
+                             ],
                     default='gpt2-xl',
                     )
 parser.add_argument(
@@ -46,9 +56,12 @@ for f in os.listdir(sentences_folder):
         disordered_lines = random.sample(lines, k=len(lines))
         all_sentences[f.split('.')[0]] = disordered_lines
 
-if 'OPT' in args.computational_model:
+if 'opt' in args.computational_model:
     short_name = args.computational_model
-    model_name = 'facebook/opt-{}b'.format(args.computational_model.replace('OPT', ''))
+    model_name = 'facebook/'.format(args.computational_model)
+if args.computational_model == 'gpt2-large':
+    short_name = 'gpt2-large'
+    model_name = 'gpt2-large'
 if args.computational_model == 'gpt2-xl':
     short_name = 'gpt2-xl'
     model_name = 'gpt2-xl'
@@ -57,6 +70,10 @@ if args.computational_model == 'roberta-large':
     model_name = 'roberta-large'
 cuda_device = 'cuda:{}'.format(args.cuda)
 
+slow_models = [
+               'opt-6.7b', 
+               'opt-13b', 
+               ]
 
 if 'gpt' in model_name:
     model = AutoModel.from_pretrained(model_name).to(cuda_device)
@@ -65,7 +82,7 @@ if 'gpt' in model_name:
     max_len = model.config.n_positions
     n_layers = model.config.n_layer
 elif 'opt' in model_name:
-    if '6.7' not in args.computational_model:
+    if args.computational_model not in slow_models:
         model = OPTModel.from_pretrained(model_name).to(cuda_device)
     else:
         model = OPTModel.from_pretrained(model_name)
@@ -155,7 +172,7 @@ with tqdm() as pbar:
                 #outputs = model(**inputs, output_attentions=False, \
                 #                output_hidden_states=True, return_dict=True)
                 try:
-                    if '6.7' not in args.computational_model:
+                    if args.computational_model not in slow_models:
                         inputs = tokenizer(l, return_tensors="pt").to(cuda_device)
                     else:
                         inputs = tokenizer(l, return_tensors="pt")
