@@ -65,7 +65,10 @@ if 'gpt' in model_name:
     max_len = model.config.n_positions
     n_layers = model.config.n_layer
 elif 'opt' in model_name:
-    model = OPTModel.from_pretrained(model_name).to(cuda_device)
+    if '6.7' not in args.computational_model:
+        model = OPTModel.from_pretrained(model_name).to(cuda_device)
+    else:
+        model = OPTModel.from_pretrained(model_name)
     tokenizer = AutoTokenizer.from_pretrained(model_name, additional_special_tokens=['[PHR]'])
     required_shape = model.config.hidden_size
     max_len = model.config.max_position_embeddings
@@ -152,7 +155,10 @@ with tqdm() as pbar:
                 #outputs = model(**inputs, output_attentions=False, \
                 #                output_hidden_states=True, return_dict=True)
                 try:
-                    inputs = tokenizer(l, return_tensors="pt").to(cuda_device)
+                    if '6.7' not in args.computational_model:
+                        inputs = tokenizer(l, return_tensors="pt").to(cuda_device)
+                    else:
+                        inputs = tokenizer(l, return_tensors="pt")
                 except RuntimeError:
                     print('input error')
                     print(l)
