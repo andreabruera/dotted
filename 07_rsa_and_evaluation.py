@@ -62,6 +62,7 @@ palette = {
 models_sorted = [#'count', #'w2v', 
                  #'opt-125m', 
                  #'opt-350m', 
+                 'opt-1.3b_top_twelve', 
                  'opt-1.3b_mid_four', 
                  'opt-1.3b_top_four', 
                  #'opt-2.7b', 

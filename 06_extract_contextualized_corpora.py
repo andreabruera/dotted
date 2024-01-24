@@ -112,10 +112,10 @@ if args.layer == 'mid_four':
 if args.layer == 'top_four':
     layer_start = -4
     ### outputs has at dimension 0 the final output
-    layer_end = n_layers+1
+    layer_end = n_layers
 if args.layer == 'top_twelve':
     layer_start = -12
-    layer_end = n_layers+1
+    layer_end = n_layers
 
 max_len = max_len - 10
 random.seed(11)
