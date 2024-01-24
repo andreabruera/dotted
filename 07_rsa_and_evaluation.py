@@ -62,11 +62,11 @@ palette = {
 models_sorted = [#'count', #'w2v', 
                  #'opt-125m', 
                  #'opt-350m', 
-                 #'opt-1.3b', 
+                 'opt-1.3b_mid_four', 
                  #'opt-2.7b', 
                  #'opt-6.7b', 
                  #'opt-13b', 
-                 'gpt2-large_mid_four',
+                 #'gpt2-large_mid_four',
                  'gpt2-xl_mid_four', 
                  #'roberta-large',
                  ]
@@ -91,7 +91,7 @@ for f in os.listdir(folder):
         vecs = [l.strip().split('\t') for l in i.readlines()][1:]
         assert len(vecs) == 100
         vecs = {l[0] : numpy.array(l[1:], dtype=numpy.float64) for l in vecs}
-        if 'gpt' not in f and 'OPT' not in f and 'roberta' not in f:
+        if 'gpt' not in f and 'opt' not in f and 'roberta' not in f:
             key = f.split('_')[0].lower()
         else:
             key = f.replace('_vectors.tsv', '')
