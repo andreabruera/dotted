@@ -147,7 +147,7 @@ with tqdm() as pbar:
                         current_span = (spans[i]+1, spans[i+1])
                     else:
                         current_span = (spans[i], spans[i+1]-1)
-                    current_span = (spans[i]+1, spans[i+1])
+                    current_span = (spans[i], spans[i+1])
                     split_spans.append(current_span)
 
                 if len(tokenizer.tokenize(l)) > max_len:
