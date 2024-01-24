@@ -146,8 +146,7 @@ with tqdm() as pbar:
                     if len(l.split()) > 5 and 'gpt' in args.computational_model:
                         current_span = (spans[i]+1, spans[i+1])
                     else:
-                        current_span = (spans[i], spans[i+1]-1)
-                    current_span = (spans[i], spans[i+1]-1)
+                        current_span = (spans[i], spans[i+1])
                     split_spans.append(current_span)
 
                 if len(tokenizer.tokenize(l)) > max_len:
