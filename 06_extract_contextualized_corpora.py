@@ -58,7 +58,7 @@ for f in os.listdir(sentences_folder):
 
 if 'opt' in args.computational_model:
     short_name = args.computational_model
-    model_name = 'facebook/'.format(args.computational_model)
+    model_name = 'facebook/{}'.format(args.computational_model)
 if args.computational_model == 'gpt2-large':
     short_name = 'gpt2-large'
     model_name = 'gpt2-large'
@@ -161,8 +161,9 @@ with tqdm() as pbar:
                 split_spans = list()
                 for i in list(range(len(spans)))[::2]:
                     if len(l.split()) > 5 and 'gpt' in args.computational_model:
-                        current_span = (spans[i]+1, spans[i+1])
+                        current_span = (spans[i]+1, spans[i+1]+1)
                     else:
+                        ### best units to use: tokens + 1
                         current_span = (spans[i], spans[i+1])
                     split_spans.append(current_span)
 
