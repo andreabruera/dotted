@@ -68,6 +68,7 @@ models_sorted = [#'count', #'w2v',
                  #'opt-13b', 
                  #'gpt2-large_mid_four',
                  'gpt2-xl_mid_four', 
+                 'gpt2-xl_top_four', 
                  #'roberta-large',
                  ]
 #models_sorted = ['count', 'w2v', 'roberta-large_low_four', 'roberta-large_mid_four', 'roberta-large_top_four']
