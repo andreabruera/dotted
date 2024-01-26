@@ -257,6 +257,7 @@ fig, ax = pyplot.subplots(figsize=(22, 10), constrained_layout=True)
 corr_stimuli = {k : [' '.join([val[1], val[0]]) for val in v] for k, v in stimuli.items()}
 
 conc = [(sense, [word_sensorimotor[sense][phr.split()[0]] for phr in sense_averages.keys() if phr in corr_stimuli['concrete'] and phr.split()[0] in word_sensorimotor[sense].keys()]) for sense, sense_averages in human_data.items()]
+import pdb; pdb.set_trace()
 abst = [(sense, [word_sensorimotor[sense][phr.split()[0]] for phr in sense_averages.keys() if phr in corr_stimuli['abstract'] and phr.split()[0] in word_sensorimotor[sense].keys()]) for sense, sense_averages in human_data.items()]
 assert [v[0] for v in conc] == [v[0] for v in abst]
 xs = [v[0] for v in conc]
