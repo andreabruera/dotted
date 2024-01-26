@@ -6,10 +6,10 @@ import scipy
 from matplotlib import pyplot
 from scipy import stats
 
-from utils import read_brysbaert_norms
-
+from utils import read_brysbaert_norms, read_sensorimotor
 
 conc, val, aro, dom = read_brysbaert_norms()
+word_sensorimotor = read_sensorimotor()
 
 counter = 0
 nouns = list()
@@ -201,7 +201,7 @@ for f in os.listdir(folder):
                     human_data[val][key].append(int(l[head_i]))
 human_data = {k : {k_two : numpy.nanmean(v_two) for k_two, v_two in v.items()} for k, v in human_data.items()}
 
-out_file = os.path.join(plot_folder, 'senses_distribution.jpg')
+out_file = os.path.join(plot_folder, 'phrase_senses_distribution.jpg')
 fig, ax = pyplot.subplots(figsize=(22, 10), constrained_layout=True)
 
 corr_stimuli = {k : [' '.join((val[1], val[0])) for val in v] for k, v in stimuli.items()}
@@ -262,6 +262,73 @@ for sense, sense_averages in human_data.items():
                   )
     ax.set_title(
                  'Visualization of differences in perceptual strength across abstract/concrete phrases',
+                 pad=20,
+                 fontweight='bold',
+                 fontsize=25,
+                 )
+    pyplot.savefig(out_file)
+
+out_file = os.path.join(plot_folder, 'verb_senses_distribution.jpg')
+fig, ax = pyplot.subplots(figsize=(22, 10), constrained_layout=True)
+
+corr_stimuli = {k : [' '.join([val[1], val[0]]) for val in v] for k, v in stimuli.items()}
+
+for sense, sense_averages in human_data.items():
+
+    conc = [(sense, [word_sensorimotor[sense][phr.split()[0]] for phr in sense_averages.keys() if phr in corr_stimuli['concrete']]) for sense, sense_averages in human_data.items()]
+    abst = [(sense, [word_sensorimotor[sense][phr.split()[0]] for phr in sense_averages.keys() if phr in corr_stimuli['abstract']]) for sense, sense_averages in human_data.items()]
+    assert [v[0] for v in conc] == [v[0] for v in abst]
+    xs = [v[0] for v in conc]
+    conc = [v[1] for v in conc]
+    abst = [v[1] for v in abst]
+    v1 = ax.violinplot(conc, 
+                           #points=100, 
+                           positions=range(len(xs)),
+                           showmeans=True, 
+                           showextrema=False, 
+                           showmedians=False,
+                           )
+    for b in v1['bodies']:
+        # get the center
+        m = numpy.mean(b.get_paths()[0].vertices[:, 0])
+        # modify the paths to not go further right than the center
+        b.get_paths()[0].vertices[:, 0] = numpy.clip(b.get_paths()[0].vertices[:, 0], -numpy.inf, m)
+        b.set_color('darkorange')
+    v1['cmeans'].set_color('darkorange')
+    v2 = ax.violinplot(abst, 
+                           #points=100, 
+                           positions=range(len(xs)),
+                           showmeans=True, 
+                           showextrema=False, 
+                           showmedians=False,
+                           )
+    for b in v2['bodies']:
+        # get the center
+        m = numpy.mean(b.get_paths()[0].vertices[:, 0])
+        # modify the paths to not go further right than the center
+        b.get_paths()[0].vertices[:, 0] = numpy.clip(b.get_paths()[0].vertices[:, 0], m, numpy.inf)
+        b.set_color('teal')
+    v2['cmeans'].set_color('teal')
+    ax.legend(
+              [v1['bodies'][0], v2['bodies'][0]],
+              ['concrete', 'abstract'],
+              fontsize=20
+              )
+    ax.set_xticks(range(len(xs)))
+    ax.set_xticklabels(
+                        xs, 
+                        fontsize=23, 
+                        fontweight='bold',
+                        )
+    pyplot.yticks(fontsize=15)
+    ax.set_ylabel(
+                  'Average rating', 
+                  fontsize=20, 
+                  fontweight='bold',
+                  labelpad=20
+                  )
+    ax.set_title(
+                 'Visualization of differences in perceptual strength across abstract/concrete verbs',
                  pad=20,
                  fontweight='bold',
                  fontsize=25,

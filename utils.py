@@ -107,3 +107,30 @@ def read_selected_nouns():
            # abstract_list.extend(line[3:])
             nouns.append(line[0])
     return nouns
+
+def read_sensorimotor():
+    ### reading dataset #1
+    mapper = {
+              'Visual.mean' : 'sight',
+              'Olfactory.mean' : 'smell',
+              'Haptic.mean' : 'touch',
+              'Gustatory.mean' : 'taste',
+              'Auditory.mean' : 'hearing',
+              }
+    ratings = {k : dict() for k in mapper.values()}
+    with open(os.path.join('data', 'Lancaster_sensorimotor_norms_for_39707_words.tsv')) as i:
+        counter = 0
+        for l in i:
+            line = l.strip().replace(',', '.').split('\t')
+            if counter == 0:
+                header = [w.strip() for w in line]
+                counter += 1
+                continue
+            word = line[0].lower()
+            for k, dest in mapper.items():
+                idx = header.index(k)
+                rating = float(line[idx])
+                if rating > 10:
+                    rating = float('.{}'.format(str(int(rating))))
+                ratings[dest][word] = rating
+    return ratings
