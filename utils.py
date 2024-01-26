@@ -45,9 +45,9 @@ def read_brysbaert_norms():
                 counter += 1
                 continue
             line = l.strip().split(',')
-            val[line[1]] = float(line[2])
-            aro[line[1]] = float(line[5])
-            dom[line[1]] = float(line[8])
+            val[line[1]] = (float(line[2]) - 1) / (9 - 1)
+            aro[line[1]] = (float(line[5]) - 1) / (9 -1)
+            dom[line[1]] = (float(line[8]) - 1) / (9 - 1)
 
     conc = dict()
     counter = 0
@@ -57,7 +57,8 @@ def read_brysbaert_norms():
                 counter += 1
                 continue
             line = l.strip().split('\t')
-            conc[line[0]] = float(line[2])
+            curr_val = (float(line[2]) - 1) / (5 - 1)
+            conc[line[0]] = curr_val
 
     imag = dict()
     fam = dict()
