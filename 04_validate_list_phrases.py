@@ -6,10 +6,11 @@ import scipy
 from matplotlib import pyplot
 from scipy import stats
 
-from utils import read_brysbaert_norms, read_sensorimotor
+from utils import read_brysbaert_norms, read_our_ratings, read_sensorimotor
 
 conc, val, aro, dom = read_brysbaert_norms()
 word_sensorimotor = read_sensorimotor()
+human_data = read_our_ratings()
 
 counter = 0
 nouns = list()
@@ -179,28 +180,6 @@ ax.set_title(
              )
 pyplot.savefig(out_file)
 
-folder = 'data'
-human_data = dict()
-for f in os.listdir(folder):
-    if 'dissertation' in f:
-        with open(os.path.join(folder, f)) as i:
-            lines = [l.strip().split('\t')[11:] for l in i.readlines()]
-            for l in lines:
-                assert len(l) == 800
-            headers = [l.replace(']', '').split(' [') for l in lines[0]]
-            for head_i, head in enumerate(headers):
-                key = ' '.join([head[0].split()[idx] for idx in [0, -1]])
-                val = head[1].lower()
-                if val in ['concreteness', 'imageability', 'familiarity']:
-                    continue
-                if val not in human_data.keys():
-                    human_data[val] = dict()
-                if key not in human_data[val].keys():
-                    human_data[val][key] = list()
-                for l in lines[1:]:
-                    human_data[val][key].append(int(l[head_i]))
-human_data = {k : {k_two : numpy.nanmean(v_two) for k_two, v_two in v.items()} for k, v in human_data.items()}
-
 out_file = os.path.join(plot_folder, 'phrase_senses_distribution.jpg')
 fig, ax = pyplot.subplots(figsize=(22, 10), constrained_layout=True)
 
@@ -255,7 +234,7 @@ for sense, sense_averages in human_data.items():
                         )
     pyplot.yticks(fontsize=15)
     ax.set_ylabel(
-                  'Average rating', 
+                  '(Normalized) average rating', 
                   fontsize=20, 
                   fontweight='bold',
                   labelpad=20
@@ -322,7 +301,7 @@ for sense, sense_averages in human_data.items():
                         )
     pyplot.yticks(fontsize=15)
     ax.set_ylabel(
-                  'Average rating', 
+                  '(Normalized) average rating', 
                   fontsize=20, 
                   fontweight='bold',
                   labelpad=20
