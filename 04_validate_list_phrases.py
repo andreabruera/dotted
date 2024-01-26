@@ -92,9 +92,16 @@ print(stat_diff)
 
 datasets = [
             ('concreteness', conc),
+            ('imageability', imag),
+            ('familiarity', imag),
             ('valence', val),
             ('arousal', aro),
             ('dominance', dom),
+            ('sight', word_sensorimotor['sight']),
+            ('touch', word_sensorimotor['touch']),
+            ('taste', word_sensorimotor['taste']),
+            ('smell', word_sensorimotor['smell']),
+            ('hearing', word_sensorimotor['hearing']),
             ]
 
 for dataset_name, dataset in datasets:
@@ -166,6 +173,8 @@ ax.set_xticklabels(
                     xs, 
                     fontsize=23, 
                     fontweight='bold',
+                    rotation=45,
+                    ha='right',
                     )
 pyplot.yticks(fontsize=15)
 ax.set_ylabel(
