@@ -47,10 +47,6 @@ palette = {
            }
 #models_sorted = [
                  #'count', 
-                 #'count-log', 
-                 #'count-pmi', 
-                 #'w2v', 
-                 #'fasttext', 
                  #'roberta-large',
                  #'gpt2-xl', 
                  #'opt',
@@ -61,15 +57,25 @@ palette = {
 #models_sorted = ['count', 'w2v', 'gpt2-xl_low_four', 'gpt2-xl_mid_four', 'gpt2-xl_top_four']
 models_sorted = [#'count', #'w2v', 
                  #'opt-125m', 
-                 #'opt-350m', 
+                 #'opt-350m_mid_four', 
                  #'opt-1.3b_top_twelve', 
-                 'opt-1.3b_mid_four', 
-                 #'opt-1.3b_top_four', 
-                 'opt-2.7b_mid_four', 
+                 #'xlm-roberta-large_mid_four',
+                 #'count-log', 
+                 #'count-pmi', 
+                 #'fasttext', 
+                 #'xglm-564m_mid_four',
+                 'xglm-1.7b_mid_four',
+                 #'xglm-2.9b_mid_four',
+                 #'xglm-4.5b_mid_four',
+                 #'opt-1.3b_mid_four', 
+                 'opt-13b_mid_four', 
+                 #'opt-2.7b_mid_four', 
+                 #'opt-6.7b_mid_four', 
+                 #'opt-13b_mid_four', 
                  #'opt-6.7b', 
                  #'opt-13b', 
                  #'gpt2-large_mid_four',
-                 'gpt2-xl_mid_four', 
+                 #'gpt2-xl_mid_four', 
                  #'gpt2-xl_top_four', 
                  #'roberta-large',
                  ]
@@ -92,9 +98,12 @@ data = dict()
 for f in os.listdir(folder):
     with open(os.path.join(folder, f)) as i:
         vecs = [l.strip().split('\t') for l in i.readlines()][1:]
-        assert len(vecs) == 100
+        try:
+            assert len(vecs) == 100
+        except AssertionError:
+            continue
         vecs = {l[0] : numpy.array(l[1:], dtype=numpy.float64) for l in vecs}
-        if 'gpt' not in f and 'opt' not in f and 'roberta' not in f:
+        if 'gpt' not in f and 'opt' not in f and 'x' not in f:
             key = f.split('_')[0].lower()
         else:
             key = f.replace('_vectors.tsv', '')

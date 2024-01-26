@@ -10,7 +10,7 @@ import torch
 
 from scipy import stats
 from tqdm import tqdm
-from transformers import AutoModel, AutoTokenizer, AutoModelForMaskedLM, AutoModelWithLMHead, OPTModel
+from transformers import AutoModel, AutoTokenizer, AutoModelForMaskedLM, AutoModelWithLMHead, OPTModel, XGLMModel, XGLMTokenizer
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -23,13 +23,19 @@ parser.add_argument(
                     choices=[
                              'opt-125m', 
                              'opt-350m', 
+                             'xglm-564m',
+                             'xglm-1.7b', 
+                             'xglm-2.9b', 
+                             'xglm-4.5b', 
                              'opt-1.3b', 
                              'opt-2.7b', 
                              'opt-6.7b', 
                              'opt-13b', 
+                             'opt-30b', 
                              'gpt2-large',
                              'gpt2-xl', 
-                             'roberta-large',
+                             'xlm-roberta-large',
+                             'xlm-xxl',
                              ],
                     default='gpt2-xl',
                     )
@@ -56,42 +62,78 @@ for f in os.listdir(sentences_folder):
         disordered_lines = random.sample(lines, k=len(lines))
         all_sentences[f.split('.')[0]] = disordered_lines
 
+short_name = args.computational_model
 if 'opt' in args.computational_model:
-    short_name = args.computational_model
     model_name = 'facebook/{}'.format(args.computational_model)
 if args.computational_model == 'gpt2-large':
-    short_name = 'gpt2-large'
     model_name = 'gpt2-large'
 if args.computational_model == 'gpt2-xl':
-    short_name = 'gpt2-xl'
     model_name = 'gpt2-xl'
-if args.computational_model == 'roberta-large':
-    short_name = 'roberta-large'
-    model_name = 'roberta-large'
+if args.computational_model == 'xglm-564m':
+    model_name = 'facebook/xglm-564M'
+if args.computational_model == 'xglm-1.7b':
+    model_name = 'facebook/xglm-1.7B'
+if args.computational_model == 'xglm-2.9b':
+    model_name = 'facebook/xglm-2.9B'
+if args.computational_model == 'xglm-4.5b':
+    model_name = 'facebook/xglm-4.5B'
+if args.computational_model == 'xlm-roberta-large':
+    model_name = 'FacebookAI/xlm-roberta-large'
+if args.computational_model == 'xlm-xxl':
+    model_name = 'facebook/xlm-roberta-xxl'
 cuda_device = 'cuda:{}'.format(args.cuda)
 
 slow_models = [
                'opt-6.7b', 
                'opt-13b', 
+               'opt-30b', 
+               'xlm-xxl'
                ]
 
 if 'gpt' in model_name:
-    model = AutoModel.from_pretrained(model_name).to(cuda_device)
+    model = AutoModel.from_pretrained(
+                                     model_name, 
+                                     cache_dir='../../datasets/hf_models/',
+                                     ).to(cuda_device)
     tokenizer = AutoTokenizer.from_pretrained(model_name, sep_token='[PHR]')
     required_shape = model.embed_dim
     max_len = model.config.n_positions
     n_layers = model.config.n_layer
 elif 'opt' in model_name:
     if args.computational_model not in slow_models:
-        model = OPTModel.from_pretrained(model_name).to(cuda_device)
+        model = OPTModel.from_pretrained(
+                                         model_name, 
+                                         cache_dir='../../datasets/hf_models/',
+                                          ).to(cuda_device)
     else:
-        model = OPTModel.from_pretrained(model_name)
+        model = OPTModel.from_pretrained(
+                                         model_name, 
+                                         cache_dir='../../datasets/hf_models/',
+                                         )
     tokenizer = AutoTokenizer.from_pretrained(model_name, additional_special_tokens=['[PHR]'])
     required_shape = model.config.hidden_size
     max_len = model.config.max_position_embeddings
     n_layers = model.config.num_hidden_layers
+elif 'xglm' in model_name:
+    if args.computational_model not in slow_models:
+        model = XGLMModel.from_pretrained(
+                                         model_name, 
+                                         cache_dir='../../datasets/hf_models/',
+                                          ).to(cuda_device)
+    else:
+        model = XGLMModel.from_pretrained(
+                                         model_name, 
+                                         cache_dir='../../datasets/hf_models/',
+                                         )
+    tokenizer = XGLMTokenizer.from_pretrained(model_name, additional_special_tokens=['[PHR]'])
+    required_shape = model.config.hidden_size
+    max_len = model.config.max_position_embeddings
+    n_layers = model.config.num_hidden_layers
 else:
-    model = AutoModelForMaskedLM.from_pretrained(model_name).to(cuda_device)
+    model = AutoModelForMaskedLM.from_pretrained(
+                                     model_name, 
+                                     cache_dir='../../datasets/hf_models/',
+                                         ).to(cuda_device)
     tokenizer = AutoTokenizer.from_pretrained(model_name, sep_token='[PHR]')
     required_shape = model.config.hidden_size
     max_len = model.config.max_position_embeddings
@@ -127,88 +169,95 @@ with tqdm() as pbar:
     for stimulus, stim_sentences in all_sentences.items():
         entity_vectors[stimulus] = list()
         assert len(stim_sentences) >= 1
-        for l_i, l in enumerate(stim_sentences):
-            l = l.replace('[SEP]', '[PHR]')
+        ### repeating 10 times to ensure replicability
+        for _ in range(10):
+            for l_i, l in enumerate(stim_sentences):
+                l = l.replace('[SEP]', '[PHR]')
 
-            inputs = tokenizer(l, return_tensors="pt")
+                inputs = tokenizer(l, return_tensors="pt")
 
-            ### checking mentions are not too long
-            spans = [i_i for i_i, i in enumerate(l.split()) if i=='[PHR]']
-            if len(spans) <= 1:
-                continue
-            split_spans = list()
-            for i in list(range(len(spans)))[::2]:
-                current_span = (spans[i]+1, spans[i+1])
-                split_spans.append(current_span)
-
-            spans = [i_i for i_i, i in enumerate(inputs['input_ids'].numpy().reshape(-1)) if 
-                    i==tokenizer.convert_tokens_to_ids(['[PHR]'])[0]]
-            if 'bert' in model_name and len(spans)%2==1:
-                spans = spans[:-1]
-                    
-            print(len(spans))
-            if len(spans) > 1:
-                try:
-                    assert len(spans) % 2 == 0
-                except AssertionError:
-                    #print(l)
+                ### checking mentions are not too long
+                spans = [i_i for i_i, i in enumerate(l.split()) if i=='[PHR]']
+                if len(spans) <= 1:
                     continue
-                old_l = '{}'.format(l)
-                l = re.sub(r'\[PHR\]', '', l)
-                ### Correcting spans
-                correction = list(range(1, len(spans)+1))
-                spans = [max(0, s-c) for s,c in zip(spans, correction)]
                 split_spans = list()
                 for i in list(range(len(spans)))[::2]:
-                    if len(l.split()) > 5 and 'gpt' in args.computational_model:
-                        current_span = (spans[i]+1, spans[i+1]+1)
-                    else:
-                        ### best units to use: tokens + 1
-                        current_span = (spans[i], spans[i+1])
+                    current_span = (spans[i]+1, spans[i+1])
                     split_spans.append(current_span)
 
-                if len(tokenizer.tokenize(l)) > max_len:
-                    print('error')
-                    continue
-                #outputs = model(**inputs, output_attentions=False, \
-                #                output_hidden_states=True, return_dict=True)
-                try:
-                    if args.computational_model not in slow_models:
-                        inputs = tokenizer(l, return_tensors="pt").to(cuda_device)
-                    else:
-                        inputs = tokenizer(l, return_tensors="pt")
-                except RuntimeError:
-                    print('input error')
-                    print(l)
-                    continue
-                try:
-                    outputs = model(**inputs, output_attentions=False, \
-                                    output_hidden_states=True, return_dict=True)
-                except RuntimeError:
-                    print('output error')
-                    print(l)
-                    continue
-
-                hidden_states = numpy.array([s[0].cpu().detach().numpy() for s in outputs['hidden_states']])
-                #last_hidden_states = numpy.array([k.detach().numpy() for k in outputs['hidden_states']])[2:6, 0, :]
-                if len(split_spans) > 1:
-                    split_spans = [split_spans[-1]]
-                for beg, end in split_spans:
-                    if len(tokenizer.tokenize(l)[beg:end]) == 0:
+                spans = [i_i for i_i, i in enumerate(inputs['input_ids'].numpy().reshape(-1)) if 
+                        i==tokenizer.convert_tokens_to_ids(['[PHR]'])[0]]
+                if 'bert' in model_name and len(spans)%2==1:
+                    spans = spans[:-1]
+                        
+                print(len(spans))
+                if len(spans) > 1:
+                    try:
+                        assert len(spans) % 2 == 0
+                    except AssertionError:
+                        #print(l)
                         continue
-                    print(tokenizer.tokenize(l)[beg:end])
-                    ### If there are less than two tokens that must be a mistake
-                    if len(tokenizer.tokenize(l)[beg:end]) < 2:
-                        continue
-                    mention = hidden_states[:, beg:end, :]
-                    mention = numpy.average(mention, axis=1)
-                    ### outputs has at dimension 0 the final output
-                    mention = mention[layer_start:layer_end, :]
+                    old_l = '{}'.format(l)
+                    l = re.sub(r'\[PHR\]', '', l)
+                    ### Correcting spans
+                    correction = list(range(1, len(spans)+1))
+                    spans = [max(0, s-c) for s,c in zip(spans, correction)]
+                    split_spans = list()
+                    for i in list(range(len(spans)))[::2]:
+                        ### best units to use: tokens + 1
+                        if len(l.split()) > 5 and 'gpt' in args.computational_model:
+                            current_span = (spans[i]+1, spans[i+1]+1)
+                        elif 'x' in args.computational_model:
+                            current_span = (spans[i], spans[i+1]+1)
+                        else:
+                            current_span = (spans[i], spans[i+1])
+                        split_spans.append(current_span)
 
-                    mention = numpy.average(mention, axis=0)
-                    assert mention.shape == (required_shape, )
-                    entity_vectors[stimulus].append(mention)
-                    pbar.update(1)
+                    if len(tokenizer.tokenize(l)) > max_len:
+                        print('error')
+                        continue
+                    #outputs = model(**inputs, output_attentions=False, \
+                    #                output_hidden_states=True, return_dict=True)
+                    try:
+                        if args.computational_model not in slow_models:
+                            inputs = tokenizer(l, return_tensors="pt").to(cuda_device)
+                        else:
+                            inputs = tokenizer(l, return_tensors="pt")
+                    except RuntimeError:
+                        print('input error')
+                        print(l)
+                        continue
+                    try:
+                        outputs = model(**inputs, output_attentions=False, \
+                                        output_hidden_states=True, return_dict=True)
+                    except RuntimeError:
+                        print('output error')
+                        print(l)
+                        continue
+
+                    try: 
+                        hidden_states = numpy.array([s[0].cpu().detach().numpy() for s in outputs['hidden_states']])
+                    except ValueError:
+                        hidden_states = numpy.array([s[0].cpu().detach().numpy() for s_i, s in enumerate(outputs['hidden_states']) if s_i!=len(outputs['hidden_states'])-1])
+                    #last_hidden_states = numpy.array([k.detach().numpy() for k in outputs['hidden_states']])[2:6, 0, :]
+                    if len(split_spans) > 1:
+                        split_spans = [split_spans[-1]]
+                    for beg, end in split_spans:
+                        if len(tokenizer.tokenize(l)[beg:end]) == 0:
+                            continue
+                        print(tokenizer.tokenize(l)[beg:end])
+                        ### If there are less than two tokens that must be a mistake
+                        if len(tokenizer.tokenize(l)[beg:end]) < 2:
+                            continue
+                        mention = hidden_states[:, beg:end, :]
+                        mention = numpy.average(mention, axis=1)
+                        ### outputs has at dimension 0 the final output
+                        mention = mention[layer_start:layer_end, :]
+
+                        mention = numpy.average(mention, axis=0)
+                        assert mention.shape == (required_shape, )
+                        entity_vectors[stimulus].append(mention)
+                        pbar.update(1)
 
 os.makedirs('vectors', exist_ok=True)
 
