@@ -161,6 +161,6 @@ def read_our_ratings():
                         rating = int(l[head_i])
                         ### min 1, max 5
                         rating = (rating - 1) / (5 - 1)
-                        human_data[val][key].append(int(l[head_i]))
+                        human_data[val][key].append(rating)
     human_data = {k : {k_two : numpy.nanmean(v_two) for k_two, v_two in v.items()} for k, v in human_data.items()}
     return human_data
