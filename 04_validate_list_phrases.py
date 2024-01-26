@@ -155,7 +155,7 @@ for b in v2['bodies']:
     b.get_paths()[0].vertices[:, 0] = numpy.clip(b.get_paths()[0].vertices[:, 0], m, numpy.inf)
     b.set_color('teal')
 v2['cmeans'].set_color('teal')
-ax.set_ylim(bottom=0., top=1.)
+ax.set_ylim(bottom=0., top=1.2)
 ax.legend(
           [v1['bodies'][0], v2['bodies'][0]],
           ['concrete', 'abstract'],
@@ -223,7 +223,7 @@ for sense, sense_averages in human_data.items():
         b.get_paths()[0].vertices[:, 0] = numpy.clip(b.get_paths()[0].vertices[:, 0], m, numpy.inf)
         b.set_color('teal')
     v2['cmeans'].set_color('teal')
-    ax.set_ylim(bottom=0., top=1.)
+    ax.set_ylim(bottom=0., top=1.2)
     ax.legend(
               [v1['bodies'][0], v2['bodies'][0]],
               ['concrete', 'abstract'],
@@ -291,7 +291,7 @@ for sense, sense_averages in human_data.items():
         b.get_paths()[0].vertices[:, 0] = numpy.clip(b.get_paths()[0].vertices[:, 0], m, numpy.inf)
         b.set_color('teal')
     v2['cmeans'].set_color('teal')
-    ax.set_ylim(bottom=0., top=1.)
+    ax.set_ylim(bottom=0., top=1.2)
     ax.legend(
               [v1['bodies'][0], v2['bodies'][0]],
               ['concrete', 'abstract'],
