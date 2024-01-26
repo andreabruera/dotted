@@ -58,7 +58,49 @@ def read_brysbaert_norms():
                 continue
             line = l.strip().split('\t')
             conc[line[0]] = float(line[2])
-    return conc, val, aro, dom
+
+    imag = dict()
+    fam = dict()
+    fam_index = [25, 26, 27]
+    img_index = [31, 32, 33]
+    with open(os.path.join('data', 'mrc2.dct')) as i:
+        for l in i:
+            line = [w.strip() for w in l.split()]
+            word = line[-1].split('|')[0].lower()
+            imag_val = float(''.join([line[0][idx] for idx in img_index]))
+            if imag_val > 0:
+                assert imag_val > 100 and imag_val < 700
+                imag[word] = (imag_val - 100) / (700 - 100)
+            fam_val = float(''.join([line[0][idx] for idx in fam_index]))
+            if fam_val > 0:
+                try:
+                    assert fam_val > 100 and imag_val < 700
+                except AssertionError:
+                    continue
+                fam[word] = (fam_val - 100) / (700 - 100)
+    counter = 0
+    with open(os.path.join('data', 'glasgow_norms.tsv')) as i:
+        for l in i:
+            line = l.strip().split('\t')
+            if counter == 0:
+                img_index = line.index('IMAG')   
+                fam_index = line.index('FAM')   
+                counter += 1
+                continue
+            try:
+                if line[0] not in imag.keys():
+                    imag[line[0]] = (float(line[img_index]) - 1) / (7 - 1)
+            except ValueError:
+                continue
+            try:
+                if line[0] not in fam.keys():
+                    curr_val = (float(line[fam_index]) - 1) / (7 - 1)
+                    assert curr_val > 0. and curr_val < 1.
+                    fam[line[0]] = curr_val
+            except ValueError:
+                continue
+
+    return conc, val, aro, dom, imag, fam
 
 def read_pos(prune=False):
 
