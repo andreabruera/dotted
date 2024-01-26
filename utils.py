@@ -151,8 +151,6 @@ def read_our_ratings():
                 for head_i, head in enumerate(headers):
                     key = ' '.join([head[0].split()[idx] for idx in [0, -1]])
                     val = head[1].lower()
-                    if val in ['concreteness', 'imageability', 'familiarity']:
-                        continue
                     if val not in human_data.keys():
                         human_data[val] = dict()
                     if key not in human_data[val].keys():

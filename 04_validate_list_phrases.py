@@ -11,6 +11,7 @@ from utils import read_brysbaert_norms, read_our_ratings, read_sensorimotor
 conc, val, aro, dom = read_brysbaert_norms()
 word_sensorimotor = read_sensorimotor()
 human_data = read_our_ratings()
+human_data = {k : v for k, v in human_data.items() if k not in ['imageability', 'familiarity', 'concreteness']}
 
 counter = 0
 nouns = list()
