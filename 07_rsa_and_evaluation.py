@@ -14,6 +14,8 @@ from sklearn.neural_network import MLPRegressor
 from scipy import stats
 from tqdm import tqdm
 
+from utils import read_our_ratings
+
 def load_regression(regression_model='ridge'):
 
     if regression_model == 'ridge':
@@ -37,7 +39,7 @@ standardize = False
 palette = {
            'concreteness' : '#E69F00',
            'imageability' : '#56B4E9', 
-           'familiarity' : '#CC79A7',
+           #'familiarity' : '#CC79A7',
            'smell' : '#009E73',
            'hearing' : 'silver',
            'sight' : '#D55E00',
@@ -65,12 +67,12 @@ models_sorted = [#'count', #'w2v',
                  #'fasttext', 
                  #'xglm-564m_mid_four',
                  'xglm-1.7b_mid_four',
-                 #'xglm-2.9b_mid_four',
-                 #'xglm-4.5b_mid_four',
-                 #'opt-1.3b_mid_four', 
-                 'opt-13b_mid_four', 
-                 #'opt-2.7b_mid_four', 
-                 #'opt-6.7b_mid_four', 
+                 'xglm-2.9b_mid_four',
+                 'xglm-4.5b_mid_four',
+                 'opt-1.3b_mid_four', 
+                 #'opt-13b_mid_four', 
+                 'opt-2.7b_mid_four', 
+                 'opt-6.7b_mid_four', 
                  #'opt-13b_mid_four', 
                  #'opt-6.7b', 
                  #'opt-13b', 
@@ -83,8 +85,8 @@ models_sorted = [#'count', #'w2v',
 
 plot_folder = 'plots'
 os.makedirs(plot_folder, exist_ok=True)
-errors_folder = os.path.join(plot_folder, 'errors')
-os.makedirs(errors_folder, exist_ok=True)
+#errors_folder = os.path.join(plot_folder, 'errors')
+#os.makedirs(errors_folder, exist_ok=True)
 corr_folder = os.path.join(plot_folder, 'correlation_analysis')
 os.makedirs(corr_folder, exist_ok=True)
 poly_folder = os.path.join(plot_folder, 'sense_discrimination_analysis')
@@ -144,25 +146,8 @@ pyplot.close()
 model_data = data.copy()
 del data
 
-folder = 'data'
-human_data = dict()
-for f in os.listdir(folder):
-    if 'dissertation' in f:
-        with open(os.path.join(folder, f)) as i:
-            lines = [l.strip().split('\t')[11:] for l in i.readlines()]
-            for l in lines:
-                assert len(l) == 800
-            headers = [l.replace(']', '').split(' [') for l in lines[0]]
-            for head_i, head in enumerate(headers):
-                key = ' '.join([head[0].split()[idx] for idx in [0, -1]])
-                val = head[1].lower()
-                if val not in human_data.keys():
-                    human_data[val] = dict()
-                if key not in human_data[val].keys():
-                    human_data[val][key] = list()
-                for l in lines[1:]:
-                    human_data[val][key].append(int(l[head_i]))
-human_data = {k : {k_two : numpy.nanmean(v_two) for k_two, v_two in v.items()} for k, v in human_data.items()}
+human_data = read_our_ratings()
+del human_data['familiarity']
 
 ### correlations
 print('evaluating on regression correlation')
@@ -199,10 +184,13 @@ for model, vecs in tqdm(model_data.items()):
             corr = scipy.stats.pearsonr(predictions, test_human)[0]
             evaluations[model][variable].append(corr)
 
+'''
 ### first plotting errors
 print('plotting errors')
 
-for variable_selection in [['imageability', 'concreteness', 'familiarity'], ['touch', 'sight', 'smell', 'hearing', 'taste']]:
+for variable_selection in [['imageability', 'concreteness', 
+                            #'familiarity',
+                            ], ['touch', 'sight', 'smell', 'hearing', 'taste']]:
     for model, model_errors in tqdm(all_errors.items()):
         #if model not in ['count', 'w2v', 'gpt2-xl']:
         #    continue
@@ -255,7 +243,7 @@ for variable_selection in [['imageability', 'concreteness', 'familiarity'], ['to
             ys = [data[1] for data in current_line]
             ### normalize y in range min-max
             avg_ys = [numpy.average(val) for val in ys]
-            avg_ys = [((y - min(avg_ys)) / (max(avg_ys) - min(avg_ys))) for y in avg_ys]
+            #avg_ys = [((y - min(avg_ys)) / (max(avg_ys) - min(avg_ys))) for y in avg_ys]
             #ax.plot(xs, [numpy.average(y) for y in ys], color='gray')
             ax.errorbar(
                        xs,
@@ -272,18 +260,16 @@ for variable_selection in [['imageability', 'concreteness', 'familiarity'], ['to
             xs = [data[0] for data in current_line]
             ys = [data[1] for data in current_line]
             hist_ys = [len(v) for v in ys]
-            hist_ys = [((y - min(hist_ys)) / (max(hist_ys) - min(hist_ys))) for y in hist_ys]
-            '''
-            ax.bar(
-                   xs,
-                   hist_ys,
-                   color=palette[variable],
-                   alpha=0.1,
-                   zorder=2.,
-                   edgecolor='white',
-                   width=0.05,
-                   )
-            '''
+            #hist_ys = [((y - min(hist_ys)) / (max(hist_ys) - min(hist_ys))) for y in hist_ys]
+            #ax.bar(
+            #       xs,
+            #       hist_ys,
+            #       color=palette[variable],
+            #       alpha=0.1,
+            #       zorder=2.,
+            #       edgecolor='white',
+            #       width=0.05,
+            #       )
             spl = scipy.interpolate.make_interp_spline(xs, hist_ys, k=3)
             x_itp = numpy.linspace(1, 5, 100)
             y_itp = spl(x_itp)
@@ -320,6 +306,7 @@ for variable_selection in [['imageability', 'concreteness', 'familiarity'], ['to
         pyplot.savefig(file_path)
         pyplot.clf()
         pyplot.close()
+'''
 
 print('plotting bars')
 ### real plotting

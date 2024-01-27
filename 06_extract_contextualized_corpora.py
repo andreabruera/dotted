@@ -27,6 +27,7 @@ parser.add_argument(
                              'xglm-1.7b', 
                              'xglm-2.9b', 
                              'xglm-4.5b', 
+                             'xglm-7.5b', 
                              'opt-1.3b', 
                              'opt-2.7b', 
                              'opt-6.7b', 
@@ -77,6 +78,8 @@ if args.computational_model == 'xglm-2.9b':
     model_name = 'facebook/xglm-2.9B'
 if args.computational_model == 'xglm-4.5b':
     model_name = 'facebook/xglm-4.5B'
+if args.computational_model == 'xglm-7.5b':
+    model_name = 'facebook/xglm-7.5B'
 if args.computational_model == 'xlm-roberta-large':
     model_name = 'FacebookAI/xlm-roberta-large'
 if args.computational_model == 'xlm-xxl':
@@ -87,6 +90,7 @@ slow_models = [
                'opt-6.7b', 
                'opt-13b', 
                'opt-30b', 
+               'xglm-7.5b',
                'xlm-xxl'
                ]
 

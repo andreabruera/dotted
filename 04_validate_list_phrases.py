@@ -1,6 +1,7 @@
 import matplotlib
 import numpy
 import os
+import pickle
 import scipy
 
 from matplotlib import pyplot
@@ -12,8 +13,9 @@ conc, val, aro, dom, imag, fam = read_brysbaert_norms()
 word_sensorimotor = read_sensorimotor()
 word_sensorimotor['concreteness'] = conc.copy()
 word_sensorimotor['imageability'] = imag.copy()
-word_sensorimotor['familiarity'] = fam.copy()
+#word_sensorimotor['familiarity'] = fam.copy()
 human_data = read_our_ratings()
+del human_data['familiarity']
 
 counter = 0
 nouns = list()
@@ -39,6 +41,38 @@ with open(os.path.join('data','phrases.txt')) as i:
 
 #assert len(abstract_list) == len(concrete_list)
 final_plot = dict()
+
+### freqs
+
+freqs = {'abstract' : dict(), 'concrete' : dict()}
+counter = 0
+verb_markers = ['VHZ',#    verb, -s (believes)
+        'VV', #verb, base (believe)
+        'VVD',# verb, past tense (believed)
+        'VVG', #verb, -ing (believing)
+        'VVN', #verb, past participle (believed)
+        'VVP', #verb, plural (believe)
+        'VBZ' #verb, -s (believes)
+        ]
+
+with open(os.path.join('pickles', 'freqs.pkl'), 'rb') as i:
+    freqs_pkl = pickle.load(i)
+    for cnc_abs, d in stimuli.items():
+        for n, v in d:
+            #freqs[cnc_abs][n] = freqs_pkl[n]
+            if v in freqs[cnc_abs].keys():
+                continue
+            else:
+                freqs[cnc_abs][v] = 0
+            for mrk in verb_markers:
+                try:
+                    freqs[cnc_abs][v] += freqs_pkl['{}_{}'.format(v, mrk)]
+                except KeyError:
+                    continue
+freqs = {k : [fr for fr in v.values()] for k, v in freqs.items()}
+vmax= max(freqs['abstract'] + freqs['concrete'])
+vmin= min(freqs['abstract'] + freqs['concrete'])
+final_plot['word frequency'] = {k : [(v - vmin) / (vmax - vmin) for v in val] for k, val in freqs.items()} 
 
 ### frequencies
 
@@ -93,7 +127,7 @@ print(stat_diff)
 datasets = [
             ('concreteness', conc),
             ('imageability', imag),
-            ('familiarity', imag),
+            #('familiarity', imag),
             ('valence', val),
             ('arousal', aro),
             ('dominance', dom),
@@ -121,6 +155,7 @@ for dataset_name, dataset in datasets:
                                'concrete' : concretes,
                                'abstract' : abstracts,
                                } 
+print(final_plot.keys())
 
 ### now plotting
 plot_folder = 'plots'
