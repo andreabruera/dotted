@@ -65,9 +65,9 @@ sentences_folder = 'sentences'
 for f in os.listdir(sentences_folder):
     full_stimuli.append(f.split('.')[0])
 
-collector = {'count' : dict(), 'fasttext' : dict(), 'w2v' : dict()}
+collector = {'count' : dict(), 'fasttext' : dict(), 'w2v' : dict(), 'conceptnet' : dict()}
 
-conc, val, aro, dom = read_brysbaert_norms()
+conc, val, aro, dom, imag, fam = read_brysbaert_norms()
 pos = read_pos()
 for w in conc.keys():
     if w not in pos.keys():
@@ -170,8 +170,19 @@ print('loading word2vec...')
 w2v = downloader.load('word2vec-google-news-300')
 print('loaded!')
 
-
-### fasttext
+print('loading conceptnet...')
+concept_net = dict()
+with open(os.path.join('..', '..', 'dataset', 'word_vectors', 'numberbatch-19.08.txt')) as i:
+    for l_i, l in enumerate(i):
+        if l_i == 0:
+            continue
+        line = l.strip().split(' ')
+        lang_word = line[0].split('/')
+        lang = lang_word[-2]
+        word = lang_word[-1]
+        if lang == 'en':
+            vec = numpy.array(line[1:], dtype=numpy.float64)
+            concept_net[word] = vec
 
 for f in full_stimuli:
     words = f.split()
@@ -184,6 +195,9 @@ for f in full_stimuli:
     vec = numpy.average([w2v.wv[w] for w in words], axis=0)
     assert vec.shape == (300, )
     collector['w2v'][f] = vec
+    ### conceptnet
+    vec = numpy.average([concept_net[w] for w in words], axis=0)
+    collector['conceptnet'][f] = vec
 
 for k, model_vecs in collector.items():
     with open(os.path.join('vectors', '{}_vectors.tsv'.format(k)), 'w') as o:
@@ -193,3 +207,4 @@ for k, model_vecs in collector.items():
             for dim in v:
                 o.write('{}\t'.format(dim))
             o.write('\n')
+
