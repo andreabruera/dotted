@@ -63,16 +63,19 @@ models_sorted = [#'count', #'w2v',
                  #'opt-1.3b_top_twelve', 
                  #'xlm-roberta-large_mid_four',
                  #'count-log', 
-                 #'count-pmi', 
-                 #'fasttext', 
+                 'count-pmi', 
+                 'fasttext', 
                  #'xglm-564m_mid_four',
-                 'xglm-1.7b_mid_four',
-                 'xglm-2.9b_mid_four',
-                 'xglm-4.5b_mid_four',
-                 'opt-1.3b_mid_four', 
+                 #'xglm-1.7b_mid_four',
+                 #'xglm-2.9b_mid_four',
+                 #'xglm-4.5b_mid_four',
+                 'xglm-7.5b_mid_four',
+                 #'bert-large_top_four',
+                 #'bert-large_mid_four',
                  #'opt-13b_mid_four', 
-                 'opt-2.7b_mid_four', 
-                 'opt-6.7b_mid_four', 
+                 #'opt-1.3b_mid_four', 
+                 #'opt-2.7b_mid_four', 
+                 #'opt-6.7b_mid_four', 
                  #'opt-13b_mid_four', 
                  #'opt-6.7b', 
                  #'opt-13b', 
@@ -105,7 +108,7 @@ for f in os.listdir(folder):
         except AssertionError:
             continue
         vecs = {l[0] : numpy.array(l[1:], dtype=numpy.float64) for l in vecs}
-        if 'gpt' not in f and 'opt' not in f and 'x' not in f:
+        if 'gpt' not in f and 'opt' not in f and 'x' not in f and 'bert' not in f:
             key = f.split('_')[0].lower()
         else:
             key = f.replace('_vectors.tsv', '')

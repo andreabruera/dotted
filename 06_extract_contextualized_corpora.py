@@ -37,8 +37,9 @@ parser.add_argument(
                              'gpt2-xl', 
                              'xlm-roberta-large',
                              'xlm-xxl',
+                             'bert-large',
                              ],
-                    default='gpt2-xl',
+                    required=True,
                     )
 parser.add_argument(
                     '--layer',
@@ -70,6 +71,8 @@ if args.computational_model == 'gpt2-large':
     model_name = 'gpt2-large'
 if args.computational_model == 'gpt2-xl':
     model_name = 'gpt2-xl'
+elif args.computational_model == 'bert-large':
+    model_name = 'bert-large-uncased'
 if args.computational_model == 'xglm-564m':
     model_name = 'facebook/xglm-564M'
 if args.computational_model == 'xglm-1.7b':
