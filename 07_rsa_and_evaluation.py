@@ -489,7 +489,7 @@ with open('{}.txt'.format(out_file), 'w') as o:
                         zorder=2.5,)
         '''
 ax.hlines([0.5], xmin=0., color='black', xmax=len(models_sorted)-.5, linestyles='dashdot', zorder=2.5)
-ax.hlines([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8], xmin=0., color='grey', alpha=0.4, xmax=len(models_sorted)-.5, linestyles='dashdot', zorder=2.5)
+ax.hlines([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.], xmin=0., color='grey', alpha=0.4, xmax=len(models_sorted)-.5, linestyles='dashdot', zorder=2.5)
 ### dummy to do the legend
 
 for col_name, pal in palette.items():
@@ -497,14 +497,14 @@ for col_name, pal in palette.items():
 
 ax.set_xticks([i+(len(corrections)/20) for i in range(len(sims.keys()))])
 ax.set_xticklabels(
-                   [m.replace('_mid_four', '\n(mid four layers)') for m in models_sorted], 
+                   [m.replace('_mid_four', '') for m in models_sorted], 
                    fontsize=30, 
                    ha='center', 
                    #rotation=45, 
                    fontweight='bold'
                    )
 pyplot.yticks(fontsize=23)
-ax.legend(fontsize=27)
+ax.legend(fontsize=27, ncol=4, loc=9)
 ax.set_ylabel('pairwise sense discrimination accuracy', fontsize=25, fontweight='bold')
 
 pyplot.savefig('{}.jpg'.format(out_file), dpi=300)
