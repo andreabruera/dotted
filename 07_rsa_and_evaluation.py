@@ -493,7 +493,7 @@ ax.hlines([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8], xmin=-0.1, color='grey', alpha=0.
 ### dummy to do the legend
 
 for col_name, pal in palette.items():
-    ax.bar([0.], [0.], color=pal, label=col_name)
+    ax.bar([1.], [0.], color=pal, label=col_name)
 
 ax.set_xticks([i+(len(corrections)/20) for i in range(len(sims.keys()))])
 ax.set_xticklabels(
