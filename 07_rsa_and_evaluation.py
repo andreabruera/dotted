@@ -496,7 +496,7 @@ with open('{}.txt'.format(out_file), 'w') as o:
                            marker='*', 
                            color=p_color, 
                            zorder=2.5,
-                           s=100.,
+                           s=120.,
                            )
             #if p < 0.005:
             #    ax.scatter([m_i+corrections[var_i]], [0.075], marker='*', color=p_color, zorder=2.5)
@@ -525,7 +525,7 @@ ax.set_xticklabels(
                    fontweight='bold'
                    )
 pyplot.yticks(fontsize=27)
-ax.legend(fontsize=32, ncol=5, loc=2)
+ax.legend(fontsize=32, ncol=5, loc=2, frameon=False)
 ax.set_ylabel('pairwise sense discrimination accuracy', fontsize=27, fontweight='bold')
 
 pyplot.savefig('{}.jpg'.format(out_file), dpi=300)
