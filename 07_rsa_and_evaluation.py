@@ -472,7 +472,7 @@ with open('{}.txt'.format(out_file), 'w') as o:
             p = p_values[(m, var)]
             o.write('{}\t{}\t{}\t'.format(m, var, round(numpy.nanmean(results[m_i]), 3)))
             o.write('{}\n'.format(round(numpy.average(p), 4)))
-            if var == 'overall':
+            if var in ['overall', 'touch']:
                 p_color = 'white'
             else:
                 p_color = 'black'
