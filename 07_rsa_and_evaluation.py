@@ -496,7 +496,7 @@ with open('{}.txt'.format(out_file), 'w') as o:
                            marker='*', 
                            color=p_color, 
                            zorder=2.5,
-                           s=150.,
+                           s=200.,
                            )
             #if p < 0.005:
             #    ax.scatter([m_i+corrections[var_i]], [0.075], marker='*', color=p_color, zorder=2.5)
@@ -530,7 +530,7 @@ ax.legend(
           ncol=5, 
           loc=2, 
           #frameon=False, 
-          borderpad=0.,
+          #borderpad=0.1,
           columnspacing=.5,
           #framealpha=0.
           )
