@@ -54,7 +54,7 @@ palette = {
            'sight' : '#D55E00',
            'taste' : '#F0E442',
            'touch' : '#0072B2',
-           'average' : '#000000',
+           'overall' : '#000000',
            }
 #models_sorted = [
                  #'count', 
@@ -136,20 +136,20 @@ fig, ax = pyplot.subplots(constrained_layout=True)
 ax.imshow(corrs)
 ax.set_xticks(range(len(sims.keys())),)
 ax.set_xticklabels(
-                   [m.replace('_mid_four', '\n(mid four layers)') for m in models_sorted], 
+                   [m.replace('_mid_four', '') for m in models_sorted], 
                    ha='center', 
                    va='top',
                    fontweight='bold'
                    )
 ax.set_yticks(range(len(sims.keys())),)
 ax.set_yticklabels(
-                   [m.replace('_mid_four', '\n(mid four layers)') for m in models_sorted], 
+                   [m.replace('_mid_four', '') for m in models_sorted], 
                    va='center', 
                    fontweight='bold'
                    )
 for i in range(len(sims.keys())):
     for i_two in range(len(sims.keys())):
-        ax.text(i_two, i, corrs[i][i_two], ha='center', va='center', color='white')
+        ax.text(i_two, i, corrs[i][i_two], ha='center', va='center', color='white', fontweight='bold')
 pyplot.savefig(os.path.join(plot_folder, 'rsa_models.jpg'), dpi=300)
 pyplot.clf()
 pyplot.close()
@@ -324,8 +324,8 @@ for variable_selection in [['imageability', 'concreteness',
 print('plotting bars')
 ### real plotting
 for model, model_res in evaluations.items():
-    evaluations[model]['average'] = [numpy.nanmean(v) for v in model_res.values()]
-variables = list(human_data.keys()) + ['average']
+    evaluations[model]['overall'] = [numpy.nanmean(v) for v in model_res.values()]
+variables = list(human_data.keys()) + ['overall']
 #models = sorted(model_data.keys())
 corrections = [i/10 for i in range(len(variables))]
 
@@ -439,14 +439,14 @@ for model, vecs in tqdm(model_data.items()):
             evaluations[model][variable].append(numpy.nanmean(corrs))
 
 for model, model_res in evaluations.items():
-    evaluations[model]['average'] = [val for v in model_res.values() for val in v]
+    evaluations[model]['overall'] = [val for v in model_res.values() for val in v]
 
 p_values = [[(model, var), scipy.stats.wilcoxon([val-0.5 for val in v], alternative='greater')[1]] for model, model_res in evaluations.items() for var, v in model_res.items()]
 corr_ps = mne.stats.fdr_correction([k[1] for k in p_values])[1]
 p_values = {k[0] : p for k, p in zip(p_values, corr_ps)}
 
 ### plotting
-variables = list(human_data.keys()) + ['average']
+variables = list(human_data.keys()) + ['overall']
 #models = sorted(model_data.keys())
 corrections = [i/10 for i in range(len(variables))]
 
@@ -471,7 +471,7 @@ with open('{}.txt'.format(out_file), 'w') as o:
             p = p_values[(m, var)]
             o.write('{}\t{}\t{}\t'.format(m, var, round(numpy.nanmean(results[m_i]), 3)))
             o.write('{}\n'.format(round(numpy.average(p), 4)))
-            if var == 'average':
+            if var == 'overall':
                 p_color = 'white'
             else:
                 p_color = 'black'
@@ -489,7 +489,7 @@ with open('{}.txt'.format(out_file), 'w') as o:
                         zorder=2.5,)
         '''
 ax.hlines([0.5], xmin=0., color='black', xmax=len(models_sorted)-.5, linestyles='dashdot', zorder=2.5)
-ax.hlines([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.], xmin=0., color='grey', alpha=0.4, xmax=len(models_sorted)-.5, linestyles='dashdot', zorder=2.5)
+ax.hlines([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.], xmin=0., color='grey', alpha=0.4, xmax=len(models_sorted)-.5, linestyles='dashdot', zorder=2.5)
 ### dummy to do the legend
 
 for col_name, pal in palette.items():
@@ -504,7 +504,7 @@ ax.set_xticklabels(
                    fontweight='bold'
                    )
 pyplot.yticks(fontsize=23)
-ax.legend(fontsize=27, ncol=4, loc=9)
+ax.legend(fontsize=30, ncol=4, loc=2)
 ax.set_ylabel('pairwise sense discrimination accuracy', fontsize=25, fontweight='bold')
 
 pyplot.savefig('{}.jpg'.format(out_file), dpi=300)

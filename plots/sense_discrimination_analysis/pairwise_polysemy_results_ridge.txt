@@ -27,7 +27,7 @@ count-pmi	touch	0.72	0.004
 fasttext	touch	0.8	0.0003
 numberbatch	touch	0.7	0.0024
 xglm-7.5b_mid_four	touch	0.74	0.0032
-count-pmi	average	0.601	0.0007
-fasttext	average	0.621	0.0001
-numberbatch	average	0.646	0.0
-xglm-7.5b_mid_four	average	0.657	0.0
+count-pmi	overall	0.601	0.0007
+fasttext	overall	0.621	0.0001
+numberbatch	overall	0.646	0.0
+xglm-7.5b_mid_four	overall	0.657	0.0
