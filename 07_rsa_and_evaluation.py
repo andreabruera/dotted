@@ -529,10 +529,10 @@ ax.legend(
           fontsize=32, 
           ncol=5, 
           loc=2, 
-          frameon=False, 
+          #frameon=False, 
           borderpad=0.,
-          columnspacing=1.,
-          framealpha=0.
+          columnspacing=.5,
+          #framealpha=0.
           )
 ax.set_ylabel('pairwise sense discrimination accuracy', fontsize=27, fontweight='bold')
 
