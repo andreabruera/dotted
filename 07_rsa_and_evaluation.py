@@ -485,7 +485,7 @@ with open('{}.txt'.format(out_file), 'w') as o:
                            marker='*', 
                            color=p_color, 
                            zorder=2.5,
-                           s=100.,
+                           s=200.,
                            label=label
                            )
                     counter += 1
@@ -526,7 +526,7 @@ ax.set_xticklabels(
                    )
 pyplot.yticks(fontsize=27)
 ax.legend(
-          fontsize=35, 
+          fontsize=40, 
           ncol=5, 
           loc=2, 
           #frameon=False, 
