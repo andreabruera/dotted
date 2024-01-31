@@ -243,7 +243,7 @@ corr_stimuli = {k : [' '.join((val[1], val[0])) for val in v] for k, v in stimul
 conc = [(sense, [var for phr, var in sense_averages.items() if phr in corr_stimuli['concrete']]) for sense, sense_averages in human_data.items()]
 abst = [(sense, [var for phr, var in sense_averages.items() if phr in corr_stimuli['abstract']]) for sense, sense_averages in human_data.items()]
 assert [v[0] for v in conc] == [v[0] for v in abst]
-xs = [v[0] for v in conc]
+xs = [v[0] if len(v[0])<8 else '{}.'.format(v[0][:7]) for v in conc]
 conc = [v[1] for v in conc]
 abst = [v[1] for v in abst]
 v1 = ax.violinplot(conc, 
@@ -283,10 +283,10 @@ ax.legend(
 ax.set_xticks(range(len(xs)))
 ax.set_xticklabels(
                     xs, 
-                    fontsize=35, 
+                    fontsize=40, 
                     fontweight='bold',
                     )
-pyplot.yticks(fontsize=15)
+pyplot.yticks(fontsize=20)
 ax.set_ylabel(
               '(normalized) average rating', 
               fontsize=27, 
