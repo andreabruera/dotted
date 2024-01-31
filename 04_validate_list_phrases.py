@@ -4,10 +4,19 @@ import os
 import pickle
 import scipy
 
-from matplotlib import pyplot
+from matplotlib import font_manager, pyplot
 from scipy import stats
 
 from utils import read_brysbaert_norms, read_our_ratings, read_sensorimotor
+
+### Font setup
+# Using Helvetica as a font
+font_folder = '/import/cogsci/andrea/dataset/fonts/'
+font_dirs = [font_folder, ]
+font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
+for p in font_files:
+    font_manager.fontManager.addfont(p)
+matplotlib.rcParams['font.family'] = 'Helvetica LT Std'
 
 conc, val, aro, dom, imag, fam = read_brysbaert_norms()
 word_sensorimotor = read_sensorimotor()
@@ -284,12 +293,12 @@ ax.set_ylabel(
               fontweight='bold',
               labelpad=20
               )
-ax.set_title(
-             'Visualization of differences in perceptual strength across abstract/concrete phrases',
-             pad=20,
-             fontweight='bold',
-             fontsize=25,
-             )
+#ax.set_title(
+#             'Visualization of differences in perceptual strength across abstract/concrete phrases',
+#             pad=20,
+#             fontweight='bold',
+#             fontsize=25,
+#             )
 pyplot.savefig(out_file)
 
 out_file = os.path.join(plot_folder, 'verb_senses_distribution.jpg')

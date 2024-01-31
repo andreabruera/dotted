@@ -7,7 +7,7 @@ import random
 import scipy
 import sklearn
 
-from matplotlib import pyplot
+from matplotlib import font_manager, pyplot
 from mne import stats
 from sklearn.linear_model import LinearRegression, RidgeCV
 from sklearn.neural_network import MLPRegressor
@@ -32,6 +32,15 @@ def load_regression(regression_model='ridge'):
         raise RuntimeError('specified model ({}) is not implemented')
 
     return regression
+
+### Font setup
+# Using Helvetica as a font
+font_folder = '/import/cogsci/andrea/dataset/fonts/'
+font_dirs = [font_folder, ]
+font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
+for p in font_files:
+    font_manager.fontManager.addfont(p)
+matplotlib.rcParams['font.family'] = 'Helvetica LT Std'
 
 regression_model = 'ridge'
 standardize = False
