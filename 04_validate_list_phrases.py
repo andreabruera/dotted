@@ -278,18 +278,18 @@ ax.set_ylim(bottom=0., top=1.15)
 ax.legend(
           [v1['bodies'][0], v2['bodies'][0]],
           ['concrete', 'abstract'],
-          fontsize=20
+          fontsize=40
           )
 ax.set_xticks(range(len(xs)))
 ax.set_xticklabels(
                     xs, 
-                    fontsize=23, 
+                    fontsize=35, 
                     fontweight='bold',
                     )
 pyplot.yticks(fontsize=15)
 ax.set_ylabel(
-              '(Normalized) average rating', 
-              fontsize=20, 
+              '(normalized) average rating', 
+              fontsize=27, 
               fontweight='bold',
               labelpad=20
               )
