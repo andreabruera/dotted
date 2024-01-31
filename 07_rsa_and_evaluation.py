@@ -526,13 +526,13 @@ ax.set_xticklabels(
                    )
 pyplot.yticks(fontsize=27)
 ax.legend(
-          fontsize=32, 
+          fontsize=30, 
           ncol=5, 
           loc=2, 
           #frameon=False, 
-          borderpad=0.2,
+          borderpad=0.1,
           columnspacing=.4,
-          labelspacing=.3,
+          labelspacing=.2,
           #framealpha=0.
           )
 ax.set_ylabel('pairwise sense discrimination accuracy', fontsize=27, fontweight='bold')
