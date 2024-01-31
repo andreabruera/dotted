@@ -479,16 +479,24 @@ with open('{}.txt'.format(out_file), 'w') as o:
             if p < 0.05:
                 if counter==0:
                     label='p<0.05'
-                else:
-                    label=''
-                ax.scatter(
+                    ax.scatter(
                            [m_i+corrections[var_i]], 
                            [0.05], 
                            marker='*', 
                            color=p_color, 
                            zorder=2.5,
-                           s=30.,
+                           s=100.,
                            label=label
+                           )
+                    counter += 1
+                else:
+                    ax.scatter(
+                           [m_i+corrections[var_i]], 
+                           [0.05], 
+                           marker='*', 
+                           color=p_color, 
+                           zorder=2.5,
+                           s=100.,
                            )
             #if p < 0.005:
             #    ax.scatter([m_i+corrections[var_i]], [0.075], marker='*', color=p_color, zorder=2.5)
