@@ -488,8 +488,8 @@ with open('{}.txt'.format(out_file), 'w') as o:
                         edgecolors='black',
                         zorder=2.5,)
         '''
-ax.hlines([0.5], xmin=0., color='black', xmax=len(models_sorted)-.2, linestyles='dashdot', zorder=2.5)
-ax.hlines([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.], xmin=0., color='grey', alpha=0.4, xmax=len(models_sorted)-.2, linestyles='dashdot', zorder=2.5)
+ax.hlines([0.5], xmin=0., color='black', xmax=len(models_sorted)-.4, linestyles='dashdot', zorder=2.5)
+ax.hlines([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.], xmin=0., color='grey', alpha=0.4, xmax=len(models_sorted)-.4, linestyles='dashdot', zorder=2.5)
 ### dummy to do the legend
 
 for col_name, pal in palette.items():
