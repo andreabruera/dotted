@@ -526,7 +526,7 @@ ax.set_xticklabels(
                    )
 pyplot.yticks(fontsize=27)
 ax.legend(
-          fontsize=30, 
+          fontsize=35, 
           ncol=5, 
           loc=2, 
           #frameon=False, 
