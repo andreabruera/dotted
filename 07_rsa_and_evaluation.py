@@ -458,6 +458,7 @@ if len(models_sorted) > 3:
     fig, ax = pyplot.subplots(constrained_layout=True, figsize=(22,10))
 else:
     fig, ax = pyplot.subplots(constrained_layout=True, figsize=(12,10))
+counter = 0
 with open('{}.txt'.format(out_file), 'w') as o:
     o.write('model\tsemantic_variable\tpairwise_accuracy\tp-value\n')
     for var_i, var in enumerate(variables):
@@ -476,11 +477,23 @@ with open('{}.txt'.format(out_file), 'w') as o:
             else:
                 p_color = 'black'
             if p < 0.05:
-                ax.scatter([m_i+corrections[var_i]], [0.05], marker='*', color=p_color, zorder=2.5)
-            if p < 0.005:
-                ax.scatter([m_i+corrections[var_i]], [0.075], marker='*', color=p_color, zorder=2.5)
-            if p < 0.0005:
-                ax.scatter([m_i+corrections[var_i]], [0.1], marker='*', color=p_color, zorder=2.5)
+                if counter==0:
+                    label='p<0.05'
+                else:
+                    label=''
+                ax.scatter(
+                           [m_i+corrections[var_i]], 
+                           [0.05], 
+                           marker='*', 
+                           color=p_color, 
+                           zorder=2.5,
+                           s=30.,
+                           label=label
+                           )
+            #if p < 0.005:
+            #    ax.scatter([m_i+corrections[var_i]], [0.075], marker='*', color=p_color, zorder=2.5)
+            #if p < 0.0005:
+            #    ax.scatter([m_i+corrections[var_i]], [0.1], marker='*', color=p_color, zorder=2.5)
         '''
         ### scatters
         for x, res in zip(xs, results):
@@ -498,14 +511,14 @@ for col_name, pal in palette.items():
 ax.set_xticks([i+(len(corrections)/20) for i in range(len(sims.keys()))])
 ax.set_xticklabels(
                    [m.replace('_mid_four', '') for m in models_sorted], 
-                   fontsize=40, 
+                   fontsize=45, 
                    ha='center', 
                    #rotation=45, 
                    fontweight='bold'
                    )
-pyplot.yticks(fontsize=25)
-ax.legend(fontsize=32, ncol=4, loc=2)
-ax.set_ylabel('pairwise sense discrimination accuracy', fontsize=25, fontweight='bold')
+pyplot.yticks(fontsize=27)
+ax.legend(fontsize=32, ncol=5, loc=2)
+ax.set_ylabel('pairwise sense discrimination accuracy', fontsize=27, fontweight='bold')
 
 pyplot.savefig('{}.jpg'.format(out_file), dpi=300)
 pyplot.clf()
