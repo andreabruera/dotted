@@ -498,14 +498,14 @@ for col_name, pal in palette.items():
 ax.set_xticks([i+(len(corrections)/20) for i in range(len(sims.keys()))])
 ax.set_xticklabels(
                    [m.replace('_mid_four', '\n(mid four layers)') for m in models_sorted], 
-                   fontsize=23, 
+                   fontsize=27, 
                    ha='center', 
                    #rotation=45, 
                    fontweight='bold'
                    )
-pyplot.yticks(fontsize=20)
-ax.legend(fontsize=15)
-ax.set_ylabel('pairwise sense discrimination accuracy', fontsize=20, fontweight='bold')
+pyplot.yticks(fontsize=23)
+ax.legend(fontsize=20)
+ax.set_ylabel('pairwise sense discrimination accuracy', fontsize=25, fontweight='bold')
 
 pyplot.savefig('{}.jpg'.format(out_file), dpi=300)
 pyplot.clf()
