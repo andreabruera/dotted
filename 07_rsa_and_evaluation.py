@@ -488,8 +488,8 @@ with open('{}.txt'.format(out_file), 'w') as o:
                         edgecolors='black',
                         zorder=2.5,)
         '''
-ax.hlines([0.5], xmin=0., color='black', xmax=len(models_sorted)-.3, linestyles='dashdot', zorder=2.5)
-ax.hlines([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.], xmin=0., color='grey', alpha=0.4, xmax=len(models_sorted)-.3, linestyles='dashdot', zorder=2.5)
+ax.hlines([0.5], xmin=0., color='black', xmax=len(models_sorted)-.1, linestyles='dashdot', zorder=2.5)
+ax.hlines([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.], xmin=0., color='grey', alpha=0.4, xmax=len(models_sorted)-.1, linestyles='dashdot', zorder=2.5)
 ### dummy to do the legend
 
 for col_name, pal in palette.items():
@@ -498,7 +498,7 @@ for col_name, pal in palette.items():
 ax.set_xticks([i+(len(corrections)/20) for i in range(len(sims.keys()))])
 ax.set_xticklabels(
                    [m.replace('_mid_four', '') for m in models_sorted], 
-                   fontsize=35, 
+                   fontsize=40, 
                    ha='center', 
                    #rotation=45, 
                    fontweight='bold'
