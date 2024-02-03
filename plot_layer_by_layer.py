@@ -19,6 +19,8 @@ with open('layer_by_layer_overall_results.tsv') as i:
         if l_i == 0:
             continue
         line = l.strip().split('\t')
+        if '564' in line[0] or '2.9' in line[0]:
+            continue
         results[line[0]] = [float(v) for v in line[1:]]
 
 static = ['count-pmi', 'numberbatch', 'fasttext']
