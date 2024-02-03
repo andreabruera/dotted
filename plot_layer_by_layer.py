@@ -20,6 +20,7 @@ with open('layer_by_layer_overall_results.tsv') as i:
             continue
         line = l.strip().split('\t')
         if '564' in line[0] or '2.9' in line[0]:
+            print(line)
             continue
         results[line[0]] = [float(v) for v in line[1:]]
 
