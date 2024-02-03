@@ -83,6 +83,14 @@ vmax= max(freqs['abstract'] + freqs['concrete'])
 vmin= min(freqs['abstract'] + freqs['concrete'])
 final_plot['word frequency'] = {k : [(v - vmin) / (vmax - vmin) for v in val] for k, val in freqs.items()} 
 
+print('\n\tverb frequency\n')
+abstract_freqs, concrete_freqs = freqs['abstract'], freqs['concrete']
+
+stat_diff = scipy.stats.ttest_ind(concrete_freqs, abstract_freqs)
+print('concrete: {}'.format(numpy.average(concrete_freqs)))
+print('abstract: {}'.format(numpy.average(abstract_freqs)))
+print(stat_diff)
+
 ### frequencies
 
 coocs = {'abstract' : list(), 'concrete' : list()}

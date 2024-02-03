@@ -12,10 +12,12 @@ from scipy import stats
 from tqdm import tqdm
 from transformers import AutoModel, AutoTokenizer, AutoModelForMaskedLM, AutoModelWithLMHead, OPTModel, XGLMModel, XGLMTokenizer
 
+num_layers = [str(i) for i in range(96)]
+
 parser = argparse.ArgumentParser()
 parser.add_argument(
                     '--cuda',
-                    choices=['0', '1', '2'],
+                    choices=['0', '1', '2', '3'],
                     required=True
                     )
 parser.add_argument(
@@ -47,9 +49,10 @@ parser.add_argument(
                              'input_layer', 
                              'low_four', 
                              'mid_four', 
+                             'mid_six', 
                              'top_four', 
                              'top_twelve'
-                             ],
+                             ] + num_layers,
                     required=True
                     )
 args = parser.parse_args()
@@ -90,10 +93,10 @@ if args.computational_model == 'xlm-xxl':
 cuda_device = 'cuda:{}'.format(args.cuda)
 
 slow_models = [
-               'opt-6.7b', 
+               #'opt-6.7b', 
                'opt-13b', 
                'opt-30b', 
-               'xglm-7.5b',
+               #'xglm-7.5b',
                'xlm-xxl'
                ]
 
@@ -146,6 +149,7 @@ else:
     max_len = model.config.max_position_embeddings
     n_layers = model.config.num_hidden_layers
 
+
 print('Dimensionality: {}'.format(required_shape))
 print('Number of layers: {}'.format(n_layers))
 if args.layer == 'input_layer':
@@ -158,6 +162,11 @@ if args.layer == 'low_four':
 if args.layer == 'mid_four':
     layer_start = int(n_layers/2)-2
     layer_end = int(n_layers/2)+3
+if args.layer == 'mid_six':
+    layer_start = int(n_layers/2)-3
+    layer_end = int(n_layers/2)+3
+    print(list(range(layer_start, layer_end)))
+    assert len(range(layer_start, layer_end)) == 6
 if args.layer == 'top_four':
     layer_start = -4
     ### outputs has at dimension 0 the final output
@@ -165,6 +174,11 @@ if args.layer == 'top_four':
 if args.layer == 'top_twelve':
     layer_start = -12
     layer_end = n_layers+1
+if args.layer in num_layers:
+    if int(args.layer) > n_layers:
+        raise RuntimeError('The required layer does not exist!')
+    layer_start = int(args.layer)
+    layer_end = int(args.layer)+1
 
 max_len = max_len - 10
 random.seed(11)
@@ -176,103 +190,105 @@ with tqdm() as pbar:
     for stimulus, stim_sentences in all_sentences.items():
         entity_vectors[stimulus] = list()
         assert len(stim_sentences) >= 1
-        ### repeating 10 times to ensure replicability
-        for _ in range(10):
-            for l_i, l in enumerate(stim_sentences):
-                l = l.replace('[SEP]', '[PHR]')
+        for l_i, l in enumerate(stim_sentences):
+            l = l.replace('[SEP]', '[PHR]')
 
-                inputs = tokenizer(l, return_tensors="pt")
+            inputs = tokenizer(l, return_tensors="pt")
 
-                ### checking mentions are not too long
-                spans = [i_i for i_i, i in enumerate(l.split()) if i=='[PHR]']
-                if len(spans) <= 1:
+            ### checking mentions are not too long
+            spans = [i_i for i_i, i in enumerate(l.split()) if i=='[PHR]']
+            if len(spans) <= 1:
+                continue
+            split_spans = list()
+            for i in list(range(len(spans)))[::2]:
+                current_span = (spans[i]+1, spans[i+1])
+                split_spans.append(current_span)
+
+            spans = [i_i for i_i, i in enumerate(inputs['input_ids'].numpy().reshape(-1)) if 
+                    i==tokenizer.convert_tokens_to_ids(['[PHR]'])[0]]
+            if 'bert' in model_name and len(spans)%2==1:
+                spans = spans[:-1]
+                    
+            print(len(spans))
+            if len(spans) > 1:
+                try:
+                    assert len(spans) % 2 == 0
+                except AssertionError:
+                    #print(l)
                     continue
+                old_l = '{}'.format(l)
+                l = re.sub(r'\[PHR\]', '', l)
+                ### Correcting spans
+                correction = list(range(1, len(spans)+1))
+                spans = [max(0, s-c) for s,c in zip(spans, correction)]
                 split_spans = list()
                 for i in list(range(len(spans)))[::2]:
-                    current_span = (spans[i]+1, spans[i+1])
+                    ### best units to use: tokens + 1
+                    if len(l.split()) > 5 and 'gpt' in args.computational_model:
+                        current_span = (spans[i]+1, spans[i+1]+1)
+                    elif 'x' in args.computational_model:
+                        current_span = (spans[i], spans[i+1]+1)
+                    else:
+                        current_span = (spans[i], spans[i+1])
                     split_spans.append(current_span)
 
-                spans = [i_i for i_i, i in enumerate(inputs['input_ids'].numpy().reshape(-1)) if 
-                        i==tokenizer.convert_tokens_to_ids(['[PHR]'])[0]]
-                if 'bert' in model_name and len(spans)%2==1:
-                    spans = spans[:-1]
-                        
-                print(len(spans))
-                if len(spans) > 1:
-                    try:
-                        assert len(spans) % 2 == 0
-                    except AssertionError:
-                        #print(l)
-                        continue
-                    old_l = '{}'.format(l)
-                    l = re.sub(r'\[PHR\]', '', l)
-                    ### Correcting spans
-                    correction = list(range(1, len(spans)+1))
-                    spans = [max(0, s-c) for s,c in zip(spans, correction)]
-                    split_spans = list()
-                    for i in list(range(len(spans)))[::2]:
-                        ### best units to use: tokens + 1
-                        if len(l.split()) > 5 and 'gpt' in args.computational_model:
-                            current_span = (spans[i]+1, spans[i+1]+1)
-                        elif 'x' in args.computational_model:
-                            current_span = (spans[i], spans[i+1]+1)
-                        else:
-                            current_span = (spans[i], spans[i+1])
-                        split_spans.append(current_span)
+                if len(tokenizer.tokenize(l)) > max_len:
+                    print('error')
+                    continue
+                #outputs = model(**inputs, output_attentions=False, \
+                #                output_hidden_states=True, return_dict=True)
+                try:
+                    if args.computational_model not in slow_models:
+                        inputs = tokenizer(l, return_tensors="pt").to(cuda_device)
+                    else:
+                        inputs = tokenizer(l, return_tensors="pt")
+                except RuntimeError:
+                    print('input error')
+                    print(l)
+                    continue
+                try:
+                    outputs = model(**inputs, output_attentions=False, \
+                                    output_hidden_states=True, return_dict=True)
+                except RuntimeError:
+                    print('output error')
+                    print(l)
+                    continue
 
-                    if len(tokenizer.tokenize(l)) > max_len:
-                        print('error')
+                try: 
+                    hidden_states = numpy.array([s[0].cpu().detach().numpy() for s in outputs['hidden_states']])
+                except ValueError:
+                    hidden_states = numpy.array([s[0].cpu().detach().numpy() for s_i, s in enumerate(outputs['hidden_states']) if s_i!=len(outputs['hidden_states'])-1])
+                #last_hidden_states = numpy.array([k.detach().numpy() for k in outputs['hidden_states']])[2:6, 0, :]
+                if len(split_spans) > 1:
+                    split_spans = [split_spans[-1]]
+                for beg, end in split_spans:
+                    if len(tokenizer.tokenize(l)[beg:end]) == 0:
                         continue
-                    #outputs = model(**inputs, output_attentions=False, \
-                    #                output_hidden_states=True, return_dict=True)
-                    try:
-                        if args.computational_model not in slow_models:
-                            inputs = tokenizer(l, return_tensors="pt").to(cuda_device)
-                        else:
-                            inputs = tokenizer(l, return_tensors="pt")
-                    except RuntimeError:
-                        print('input error')
-                        print(l)
+                    print(tokenizer.tokenize(l)[beg:end])
+                    ### If there are less than two tokens that must be a mistake
+                    if len(tokenizer.tokenize(l)[beg:end]) < 2:
                         continue
-                    try:
-                        outputs = model(**inputs, output_attentions=False, \
-                                        output_hidden_states=True, return_dict=True)
-                    except RuntimeError:
-                        print('output error')
-                        print(l)
-                        continue
+                    mention = hidden_states[:, beg:end, :]
+                    mention = numpy.average(mention, axis=1)
+                    ### outputs has at dimension 0 the final output
+                    mention = mention[layer_start:layer_end, :]
 
-                    try: 
-                        hidden_states = numpy.array([s[0].cpu().detach().numpy() for s in outputs['hidden_states']])
-                    except ValueError:
-                        hidden_states = numpy.array([s[0].cpu().detach().numpy() for s_i, s in enumerate(outputs['hidden_states']) if s_i!=len(outputs['hidden_states'])-1])
-                    #last_hidden_states = numpy.array([k.detach().numpy() for k in outputs['hidden_states']])[2:6, 0, :]
-                    if len(split_spans) > 1:
-                        split_spans = [split_spans[-1]]
-                    for beg, end in split_spans:
-                        if len(tokenizer.tokenize(l)[beg:end]) == 0:
-                            continue
-                        print(tokenizer.tokenize(l)[beg:end])
-                        ### If there are less than two tokens that must be a mistake
-                        if len(tokenizer.tokenize(l)[beg:end]) < 2:
-                            continue
-                        mention = hidden_states[:, beg:end, :]
-                        mention = numpy.average(mention, axis=1)
-                        ### outputs has at dimension 0 the final output
-                        mention = mention[layer_start:layer_end, :]
-
-                        mention = numpy.average(mention, axis=0)
-                        assert mention.shape == (required_shape, )
-                        entity_vectors[stimulus].append(mention)
-                        pbar.update(1)
+                    mention = numpy.average(mention, axis=0)
+                    assert mention.shape == (required_shape, )
+                    entity_vectors[stimulus].append(mention)
+                    pbar.update(1)
 
 os.makedirs('vectors', exist_ok=True)
 
 with open(os.path.join('vectors', '{}_{}_vectors.tsv'.format(short_name, args.layer)), 'w') as o:
     o.write('phrase\t{}_vectors\n'.format(short_name))
     for k, vecs in entity_vectors.items():
-        idxs = random.sample(list(range(len(vecs))), k=min(10, len(vecs)))
-        vec = numpy.average([vecs[idx] for idx in idxs], axis=0)
+        iter_vecs = list()
+        for _ in range(10):
+            idxs = random.sample(list(range(len(vecs))), k=min(10, len(vecs)))
+            vec = numpy.average([vecs[idx] for idx in idxs], axis=0)
+            iter_vecs.append(vec)
+        vec = numpy.average(iter_vecs, axis=0)
 
         ### vectors
         assert vec.shape == (required_shape, )
