@@ -52,8 +52,13 @@ del human_data['familiarity']
 
 ### contextualized
 
-models = ['count-pmi', 'fasttext', 'numberbatch', 
-          'xglm-564m', 'xglm-1.7b', 'xglm-2.9b', 'xglm-4.5b', 'xglm-7.5b'
+models = [
+          'count-pmi', 'fasttext', 'numberbatch', 
+          #'xglm-564m', 
+          'xglm-1.7b', 
+          #'xglm-2.9b', 
+          'xglm-4.5b', 'xglm-7.5b',
+          'opt-1.3b', 'opt-6.7b',
           ]
 
 plot_folder = 'plots'
@@ -71,7 +76,7 @@ with tqdm() as overall_counter:
     for model in models:
         for layer_idx in range(32):
 
-            if 'lm' in model:
+            if 'lm' in model or 'opt' in model:
                 f = os.path.join(folder, '{}_{}_vectors.tsv'.format(model, layer_idx))
             else:
                 if layer_idx > 0:
@@ -80,6 +85,7 @@ with tqdm() as overall_counter:
             if not os.path.exists(f):
                 print(f)
                 continue
+            print([model, layer_idx])
             data = dict()
             with open(f) as i:
                 vecs = [l.strip().split('\t') for l in i.readlines()][1:]
@@ -88,6 +94,7 @@ with tqdm() as overall_counter:
                 #except AssertionError:
                 #    continue
                 vecs = {l[0] : numpy.array(l[1:], dtype=numpy.float64) for l in vecs}
+                print(set([v.shape for v in vecs.values()]))
                 #if 'gpt' not in f and 'opt' not in f and 'x' not in f and 'bert' not in f:
                 #    key = f.split('_')[0].lower()
                 #else:
@@ -160,10 +167,10 @@ with tqdm() as overall_counter:
                         corrs.append(acc)
                     evaluations[variable].append(numpy.nanmean(corrs))
             for k, v in evaluations.items():
-                overall_results[model][k].append(numpy.average(v))
+                overall_results[model][k].append(numpy.nanmean(v))
             overall_counter.update(1)
 print('overall results:')
-overall_avg = {m : numpy.average([v for v in res.values()], axis=0) for m, res in overall_results.items()}
+overall_avg = {m : numpy.nanmean([v for v in res.values()], axis=0) for m, res in overall_results.items()}
 print(overall_avg)
 
 ### writing to files

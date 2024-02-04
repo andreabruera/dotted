@@ -49,6 +49,7 @@ parser.add_argument(
                              'input_layer', 
                              'low_four', 
                              'mid_four', 
+                             'low_mid_six', 
                              'mid_six', 
                              'top_four', 
                              'top_twelve'
@@ -162,6 +163,11 @@ if args.layer == 'low_four':
 if args.layer == 'mid_four':
     layer_start = int(n_layers/2)-2
     layer_end = int(n_layers/2)+3
+if args.layer == 'low_mid_six':
+    layer_start = int(n_layers/2)-6
+    layer_end = int(n_layers/2)
+    print(list(range(layer_start, layer_end)))
+    assert len(range(layer_start, layer_end)) == 6
 if args.layer == 'mid_six':
     layer_start = int(n_layers/2)-3
     layer_end = int(n_layers/2)+3
