@@ -62,18 +62,18 @@ for model, model_results in results.items():
                 )
 ax.set_xlabel(
          'normalized layer position',
-         fontsize=20,
+         fontsize=10,
          fontweight='bold',
          )
 ax.set_ylabel(
               'pairwise sense discrimination accuracy', 
-              fontsize=20, 
+              fontsize=10, 
               fontweight='bold',
               )
 ax.legend(
-          #fontsize=25, 
-          ncol=4, 
-          loc=2, 
+          fontsize=15, 
+          ncol=3, 
+          loc=3, 
           #frameon=False, 
           borderpad=0.1,
           columnspacing=.4,
