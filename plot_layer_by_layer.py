@@ -26,12 +26,20 @@ static_styles = {
                  'numberbatch' : ['wheat', '-.'], 
                  'fasttext' : ['thistle', ':'],
                  }
+cont_colors = {
+               'xglm-1.7b' : 'mediumaquamarine',
+               'xglm-4.5b' : 'lightseagreen',
+               'xglm-7.5b' : 'darkcyan',
+               'opt-1.3b' : 'sandybrown',
+               'opt-6.7b' : 'chocolate',
+               }
+
 ### plotting
 file_name = os.path.join('plots', 'layer_by_layer.jpg')
 fig, ax = pyplot.subplots(constrained_layout=True)
 
 ax.set_xlim(left=0., right=1.)
-ax.set_ylim(bottom=0.6, top=.7)
+ax.set_ylim(bottom=0.5, top=.7)
 
 for model, model_results in results.items():
     if model in static_styles.keys():
@@ -46,6 +54,30 @@ for model, model_results in results.items():
     else:
         ### normalize into 0-1
         xs = [i/len(model_results) for i in range(len(model_results))]
-        ax.plot(xs, model_results, label=model)
-ax.legend()
+        ax.plot(
+                xs, 
+                model_results, 
+                label=model,
+                color=cont_colors[model],
+                )
+ax.set_xlabel(
+         'normalized layer position',
+         fontsize=20,
+         fontweight='bold',
+         )
+ax.set_ylabel(
+              'pairwise sense discrimination accuracy', 
+              fontsize=20, 
+              fontweight='bold',
+              )
+ax.legend(
+          #fontsize=25, 
+          ncol=4, 
+          loc=2, 
+          #frameon=False, 
+          borderpad=0.1,
+          columnspacing=.4,
+          labelspacing=.2,
+          #framealpha=0.
+          )
 pyplot.savefig(file_name)
