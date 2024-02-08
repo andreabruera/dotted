@@ -47,7 +47,7 @@ standardize = False
 
 palette = {
            'concreteness' : '#E69F00',
-           'imageability' : '#56B4E9', 
+           #'imageability' : '#56B4E9', 
            #'familiarity' : '#CC79A7',
            'smell' : '#009E73',
            'hearing' : 'silver',
@@ -79,7 +79,9 @@ models_sorted = [#'count', #'w2v',
                  #'xglm-1.7b_mid_four',
                  #'xglm-2.9b_mid_four',
                  #'xglm-4.5b_mid_four',
-                 'xglm-4.5b_low_mid_six',
+                 'xglm-1.7b_7',
+                 #'mixtral-7b_mid_four',
+                 #'xlm-xxl_mid_four',
                  #'xglm-7.5b_mid_four',
                  #'xglm-7.5b_mid_six',
                  #'xglm-1.7b_mid_six',
@@ -139,14 +141,14 @@ fig, ax = pyplot.subplots(constrained_layout=True)
 ax.imshow(corrs)
 ax.set_xticks(range(len(sims.keys())),)
 ax.set_xticklabels(
-                   [m.replace('_mid_four', '') for m in models_sorted], 
+                   [m.replace('_7', '\n(best layer)') for m in models_sorted], 
                    ha='center', 
                    va='top',
                    fontweight='bold'
                    )
 ax.set_yticks(range(len(sims.keys())),)
 ax.set_yticklabels(
-                   [m.replace('_mid_four', '') for m in models_sorted], 
+                   [m.replace('_7', '\n(best layer)') for m in models_sorted], 
                    va='center', 
                    fontweight='bold'
                    )
@@ -163,6 +165,7 @@ model_data = data.copy()
 del data
 
 human_data = read_our_ratings()
+del human_data['imageability']
 del human_data['familiarity']
 
 ### correlations
@@ -357,26 +360,41 @@ with open('{}.txt'.format(out_file), 'w') as o:
             o.write('{}\t{}\t{}\n'.format(model, var, round(numpy.nanmean(res), 3)))
         ### scatters
         for x, res in zip(xs, results):
-            ax.scatter([x+(random.choice(range(-25, 25))/1000) for i in range(len(res))], [max(0, r) for r in res], color=color, alpha=0.5, 
-                        edgecolors='black',
-                        zorder=2.5,)
+            ax.scatter(
+                       [x+(random.choice(range(-25, 25))/1000) for i in range(len(res))], 
+                       [max(0, r) for r in res], 
+                       color=color, 
+                       alpha=0.5, 
+                       edgecolors='black',
+                       zorder=2.5,
+                       )
+ax.hlines([0.5], xmin=0., color='black', xmax=len(models_sorted)-.4, linestyles='dashdot', zorder=2.5)
+ax.hlines([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.], xmin=0., color='grey', alpha=0.4, xmax=len(models_sorted)-.4, linestyles='dashdot', zorder=2.5)
 ### dummy to do the legend
 
 for col_name, pal in palette.items():
-    ax.bar([0.], [0.], color=pal, label=col_name)
+    ax.bar([1.], [0.], color=pal, label=col_name)
 
-ax.hlines([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], xmin=-0.1, color='grey', alpha=0.4, xmax=len(models_sorted)+.1, linestyles='dashdot', zorder=2.5)
 ax.set_xticks([i+(len(corrections)/20) for i in range(len(sims.keys()))])
 ax.set_xticklabels(
-                   [m.replace('_mid_four', '\n(mid four layers)') for m in models_sorted], 
-                   fontsize=23, 
+                   [m.replace('_7', '\n(best layer)') for m in models_sorted], 
+                   fontsize=45, 
                    ha='center', 
                    #rotation=45, 
                    fontweight='bold'
                    )
-pyplot.yticks(fontsize=20)
-ax.legend(fontsize=15)
-ax.set_ylabel('Pearson correlation', fontsize=20, fontweight='bold')
+pyplot.yticks(fontsize=27)
+ax.legend(
+          fontsize=35, 
+          ncol=5, 
+          loc=2, 
+          #frameon=False, 
+          borderpad=0.1,
+          columnspacing=.4,
+          labelspacing=.2,
+          #framealpha=0.
+          )
+ax.set_ylabel('Pearson correlation', fontsize=27, fontweight='bold')
 
 pyplot.savefig('{}.jpg'.format(out_file), dpi=300)
 pyplot.clf()
@@ -505,13 +523,16 @@ with open('{}.txt'.format(out_file), 'w') as o:
             #    ax.scatter([m_i+corrections[var_i]], [0.075], marker='*', color=p_color, zorder=2.5)
             #if p < 0.0005:
             #    ax.scatter([m_i+corrections[var_i]], [0.1], marker='*', color=p_color, zorder=2.5)
-        '''
         ### scatters
         for x, res in zip(xs, results):
-            ax.scatter([x for i in range(len(res))], [max(0, r) for r in res], color=color, alpha=0.5, 
-                        edgecolors='black',
-                        zorder=2.5,)
-        '''
+            ax.scatter(
+                       [x for i in range(len(res))], 
+                       [max(0, r) for r in res], 
+                       color=color, 
+                       alpha=0.5, 
+                       edgecolors='black',
+                       zorder=2.5,
+                       )
 ax.hlines([0.5], xmin=0., color='black', xmax=len(models_sorted)-.4, linestyles='dashdot', zorder=2.5)
 ax.hlines([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.], xmin=0., color='grey', alpha=0.4, xmax=len(models_sorted)-.4, linestyles='dashdot', zorder=2.5)
 ### dummy to do the legend
@@ -521,7 +542,7 @@ for col_name, pal in palette.items():
 
 ax.set_xticks([i+(len(corrections)/20) for i in range(len(sims.keys()))])
 ax.set_xticklabels(
-                   [m.replace('_mid_four', '') for m in models_sorted], 
+                   [m.replace('_7', '\n(best layer)') for m in models_sorted], 
                    fontsize=45, 
                    ha='center', 
                    #rotation=45, 

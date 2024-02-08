@@ -21,10 +21,11 @@ matplotlib.rcParams['font.family'] = 'Helvetica LT Std'
 conc, val, aro, dom, imag, fam = read_brysbaert_norms()
 word_sensorimotor = read_sensorimotor()
 word_sensorimotor['concreteness'] = conc.copy()
-word_sensorimotor['imageability'] = imag.copy()
+#word_sensorimotor['imageability'] = imag.copy()
 #word_sensorimotor['familiarity'] = fam.copy()
 human_data = read_our_ratings()
 del human_data['familiarity']
+del human_data['imageability']
 
 counter = 0
 nouns = list()
@@ -143,7 +144,7 @@ print(stat_diff)
 
 datasets = [
             ('concreteness', conc),
-            ('imageability', imag),
+            #('imageability', imag),
             #('familiarity', imag),
             ('valence', val),
             ('arousal', aro),
@@ -251,7 +252,7 @@ corr_stimuli = {k : [' '.join((val[1], val[0])) for val in v] for k, v in stimul
 conc = [(sense, [var for phr, var in sense_averages.items() if phr in corr_stimuli['concrete']]) for sense, sense_averages in human_data.items()]
 abst = [(sense, [var for phr, var in sense_averages.items() if phr in corr_stimuli['abstract']]) for sense, sense_averages in human_data.items()]
 assert [v[0] for v in conc] == [v[0] for v in abst]
-xs = [v[0] if len(v[0])<8 else '{}.'.format(v[0][:7]) for v in conc]
+xs = [v[0] for v in conc]
 conc = [v[1] for v in conc]
 abst = [v[1] for v in abst]
 v1 = ax.violinplot(conc, 

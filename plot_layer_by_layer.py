@@ -23,15 +23,15 @@ with open('layer_by_layer_overall_results.tsv') as i:
 
 static_styles = {
                  'count-pmi' : ['silver', '--'], 
-                 'numberbatch' : ['wheat', '-.'], 
                  'fasttext' : ['thistle', ':'],
+                 'numberbatch' : ['gray', '-.'], 
                  }
 cont_colors = {
                'xglm-1.7b' : 'mediumaquamarine',
-               'xglm-4.5b' : 'lightseagreen',
-               'xglm-7.5b' : 'darkcyan',
+               'xglm-4.5b' : 'lightsalmon',
+               'xglm-7.5b' : 'khaki',
                'opt-1.3b' : 'sandybrown',
-               'opt-6.7b' : 'chocolate',
+               'opt-6.7b' : 'sienna',
                }
 
 ### plotting
@@ -39,9 +39,20 @@ file_name = os.path.join('plots', 'layer_by_layer.jpg')
 fig, ax = pyplot.subplots(constrained_layout=True)
 
 ax.set_xlim(left=0., right=1.)
-ax.set_ylim(bottom=0.5, top=.7)
+ax.set_ylim(bottom=0.54, top=.66)
 
-for model, model_results in results.items():
+models = [
+        'count-pmi',
+        'fasttext',
+        'numberbatch',
+        'xglm-4.5b',
+        'xglm-7.5b',
+        'xglm-1.7b',
+        ]
+
+#for model, model_results in results.items():
+for model in models:
+    model_results = results[model]
     if model in static_styles.keys():
         ax.hlines(
                   xmin=0., 
@@ -50,6 +61,7 @@ for model, model_results in results.items():
                   label=model,
                   linestyle=static_styles[model][1],
                   color=static_styles[model][0],
+                  linewidth=3.5,
                   )
     else:
         ### normalize into 0-1
@@ -59,15 +71,28 @@ for model, model_results in results.items():
                 model_results, 
                 label=model,
                 color=cont_colors[model],
+                linewidth=5,
                 )
+        if model == 'xglm-1.7b':
+            y = model_results[7]
+            ax.scatter(
+                     [7/len(model_results)], 
+                     [y], 
+                     label='chosen layer',
+                     color='white',
+                     zorder=3.,
+                     edgecolors='black',
+                     s=100,
+                     alpha=.5
+                     )
 ax.set_xlabel(
          'normalized layer position',
-         fontsize=10,
+         fontsize=15,
          fontweight='bold',
          )
 ax.set_ylabel(
-              'pairwise sense discrimination accuracy', 
-              fontsize=10, 
+              'overall sense discrimination accuracy', 
+              fontsize=15, 
               fontweight='bold',
               )
 ax.legend(
@@ -80,4 +105,4 @@ ax.legend(
           labelspacing=.2,
           #framealpha=0.
           )
-pyplot.savefig(file_name)
+pyplot.savefig(file_name, dpi=300)

@@ -48,6 +48,7 @@ standardize = False
 palette = {
            }
 human_data = read_our_ratings()
+del human_data['imageability']
 del human_data['familiarity']
 
 ### contextualized
@@ -57,7 +58,8 @@ models = [
           #'xglm-564m', 
           'xglm-1.7b', 
           #'xglm-2.9b', 
-          'xglm-4.5b', 'xglm-7.5b',
+          'xglm-4.5b', 
+          'xglm-7.5b',
           'opt-1.3b', 'opt-6.7b',
           ]
 

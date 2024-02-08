@@ -10,7 +10,7 @@ import torch
 
 from scipy import stats
 from tqdm import tqdm
-from transformers import AutoModel, AutoTokenizer, AutoModelForMaskedLM, AutoModelWithLMHead, OPTModel, XGLMModel, XGLMTokenizer
+from transformers import AutoModel, AutoTokenizer, AutoModelForMaskedLM, AutoModelForCausalLM, AutoModelWithLMHead, OPTModel, XGLMModel, XGLMTokenizer
 
 num_layers = [str(i) for i in range(96)]
 
@@ -40,6 +40,7 @@ parser.add_argument(
                              'xlm-roberta-large',
                              'xlm-xxl',
                              'bert-large',
+                             'mixtral-7b'
                              ],
                     required=True,
                     )
@@ -65,8 +66,9 @@ for f in os.listdir(sentences_folder):
     with open(f_path) as i:
         lines = [l.strip().split('\t')[1] for l in i.readlines()]
         assert len(lines) >= 1
-        disordered_lines = random.sample(lines, k=len(lines))
-        all_sentences[f.split('.')[0]] = disordered_lines
+        #disordered_lines = random.sample(lines, k=len(lines))
+        #all_sentences[f.split('.')[0]] = disordered_lines
+        all_sentences[f.split('.')[0]] = lines[:10]
 
 short_name = args.computational_model
 if 'opt' in args.computational_model:
@@ -91,14 +93,17 @@ if args.computational_model == 'xlm-roberta-large':
     model_name = 'FacebookAI/xlm-roberta-large'
 if args.computational_model == 'xlm-xxl':
     model_name = 'facebook/xlm-roberta-xxl'
+if args.computational_model == 'mixtral-7b':
+    model_name = 'mistralai/Mixtral-8x7B-v0.1'
 cuda_device = 'cuda:{}'.format(args.cuda)
 
 slow_models = [
                #'opt-6.7b', 
                'opt-13b', 
                'opt-30b', 
+               'mixtral-7b',
                #'xglm-7.5b',
-               'xlm-xxl'
+               #'xlm-xxl'
                ]
 
 if 'gpt' in model_name:
@@ -140,11 +145,32 @@ elif 'xglm' in model_name:
     required_shape = model.config.hidden_size
     max_len = model.config.max_position_embeddings
     n_layers = model.config.num_hidden_layers
-else:
-    model = AutoModelForMaskedLM.from_pretrained(
+elif 'tral' in model_name:
+    if args.computational_model not in slow_models:
+        model = AutoModelForCausalLM.from_pretrained(
                                      model_name, 
                                      cache_dir='../../datasets/hf_models/',
                                          ).to(cuda_device)
+    else:
+        model = AutoModelForCausalLM.from_pretrained(
+                                     model_name, 
+                                     cache_dir='../../datasets/hf_models/',
+                                         )
+    tokenizer = AutoTokenizer.from_pretrained(model_name, sep_token='[PHR]')
+    required_shape = model.config.hidden_size
+    max_len = model.config.max_position_embeddings
+    n_layers = model.config.num_hidden_layers
+else:
+    if args.computational_model not in slow_models:
+        model = AutoModelForMaskedLM.from_pretrained(
+                                     model_name, 
+                                     cache_dir='../../datasets/hf_models/',
+                                         ).to(cuda_device)
+    else:
+        model = AutoModelForMaskedLM.from_pretrained(
+                                     model_name, 
+                                     cache_dir='../../datasets/hf_models/',
+                                         )
     tokenizer = AutoTokenizer.from_pretrained(model_name, sep_token='[PHR]')
     required_shape = model.config.hidden_size
     max_len = model.config.max_position_embeddings
@@ -223,17 +249,27 @@ with tqdm() as pbar:
                     #print(l)
                     continue
                 old_l = '{}'.format(l)
+                ### removing phr
                 l = re.sub(r'\[PHR\]', '', l)
+                ### removing double spaces
+                l = re.sub('\s+', ' ', l)
                 ### Correcting spans
                 correction = list(range(1, len(spans)+1))
                 spans = [max(0, s-c) for s,c in zip(spans, correction)]
                 split_spans = list()
                 for i in list(range(len(spans)))[::2]:
-                    ### best units to use: tokens + 1
+                    ### causal language models: best units to use: tokens + 1
                     if len(l.split()) > 5 and 'gpt' in args.computational_model:
                         current_span = (spans[i]+1, spans[i+1]+1)
-                    elif 'x' in args.computational_model:
+                    ### bidirectional language models: best units to use: tokens
+                    elif args.computational_model == 'xlm-xxl':
+                        current_span = (spans[i]-1, spans[i+1]-2)
+                    ### causal language models: best units to use: tokens + 1
+                    elif 'lm' in args.computational_model:
                         current_span = (spans[i], spans[i+1]+1)
+                    ### causal language models: best units to use: tokens + 1
+                    elif 'opt' in args.computational_model:
+                        current_span = (spans[i]-1, spans[i+1]-1)
                     else:
                         current_span = (spans[i], spans[i+1])
                     split_spans.append(current_span)
