@@ -159,7 +159,7 @@ datasets = [
 for dataset_name, dataset in datasets:
     assert type(dataset) == dict
 
-    print('\n\t{}\n'.format(dataset_name))
+    print('\n\t{} - single words\n'.format(dataset_name))
     abstracts, concretes = [dataset[v] for n, v in stimuli['abstract'] if v in dataset.keys()], [dataset[v] for n, v in stimuli['concrete'] if v in dataset.keys()]
 
     stat_diff = scipy.stats.ttest_ind(concretes, abstracts)
@@ -248,6 +248,19 @@ out_file = os.path.join(plot_folder, 'phrase_senses_distribution.jpg')
 fig, ax = pyplot.subplots(figsize=(22, 10), constrained_layout=True)
 
 corr_stimuli = {k : [' '.join((val[1], val[0])) for val in v] for k, v in stimuli.items()}
+
+for dataset_name, dataset in human_data.items():
+    assert type(dataset) == dict
+
+    print('\n\t{} - whole phrase\n'.format(dataset_name))
+    abstracts, concretes = [dataset[v] for v in corr_stimuli['abstract'] if v in dataset.keys()], [dataset[v] for v in corr_stimuli['concrete'] if v in dataset.keys()]
+
+    stat_diff = scipy.stats.ttest_ind(concretes, abstracts)
+    print('concrete: {}'.format(numpy.average(concretes)))
+    print('abstract: {}'.format(numpy.average(abstracts)))
+    print(stat_diff)
+
+print(final_plot.keys())
 
 conc = [(sense, [var for phr, var in sense_averages.items() if phr in corr_stimuli['concrete']]) for sense, sense_averages in human_data.items()]
 abst = [(sense, [var for phr, var in sense_averages.items() if phr in corr_stimuli['abstract']]) for sense, sense_averages in human_data.items()]

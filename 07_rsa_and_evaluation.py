@@ -360,6 +360,9 @@ with open('{}.txt'.format(out_file), 'w') as o:
             o.write('{}\t{}\t{}\n'.format(model, var, round(numpy.nanmean(res), 3)))
         ### scatters
         for x, res in zip(xs, results):
+            if x == xs[-1]:
+                color='silver'
+
             ax.scatter(
                        [x+(random.choice(range(-25, 25))/1000) for i in range(len(res))], 
                        [max(0, r) for r in res], 
@@ -488,7 +491,14 @@ with open('{}.txt'.format(out_file), 'w') as o:
         xs = [i+corrections[var_i] for i in range(len(models_sorted))]
         bars = [numpy.nanmean(res) for res in results]
         ### bars
-        ax.bar(xs, bars, width=0.09, color=color, zorder=2)
+        ax.bar(
+               xs, 
+               bars, 
+               width=0.09, 
+               color=color, 
+               #zorder=2,
+               #ecolor='black',
+               )
         for m_i, m in enumerate(models_sorted):
             p = p_values[(m, var)]
             o.write('{}\t{}\t{}\t'.format(m, var, round(numpy.nanmean(results[m_i]), 3)))
@@ -525,13 +535,20 @@ with open('{}.txt'.format(out_file), 'w') as o:
             #    ax.scatter([m_i+corrections[var_i]], [0.1], marker='*', color=p_color, zorder=2.5)
         ### scatters
         for x, res in zip(xs, results):
-            ax.scatter(
-                       [x for i in range(len(res))], 
-                       [max(0, r) for r in res], 
-                       color=color, 
-                       alpha=0.5, 
-                       edgecolors='black',
-                       zorder=2.5,
+            #ax.scatter(
+            ax.errorbar(
+                       x, 
+                       numpy.average(res),
+        #               #[x for i in range(len(res))], 
+        #               #[max(0, r) for r in res], 
+                       ecolor='black', 
+        #               #alpha=0.5, 
+                       #edgecolors='black',
+        #               zorder=2.5,
+        #               #label=label,
+                       zorder=3.,
+                       capsize=5.,
+                       yerr=scipy.stats.sem(res),
                        )
 ax.hlines([0.5], xmin=0., color='black', xmax=len(models_sorted)-.4, linestyles='dashdot', zorder=2.5)
 ax.hlines([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.], xmin=0., color='grey', alpha=0.4, xmax=len(models_sorted)-.4, linestyles='dashdot', zorder=2.5)
