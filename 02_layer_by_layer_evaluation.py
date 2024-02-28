@@ -36,11 +36,12 @@ def load_regression(regression_model='ridge'):
 ### Font setup
 # Using Helvetica as a font
 font_folder = '/import/cogsci/andrea/dataset/fonts/'
-font_dirs = [font_folder, ]
-font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
-for p in font_files:
-    font_manager.fontManager.addfont(p)
-matplotlib.rcParams['font.family'] = 'Helvetica LT Std'
+if os.path.exists(font_folder):
+    font_dirs = [font_folder, ]
+    font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
+    for p in font_files:
+        font_manager.fontManager.addfont(p)
+    matplotlib.rcParams['font.family'] = 'Helvetica LT Std'
 
 regression_model = 'ridge'
 standardize = False
@@ -91,25 +92,8 @@ with tqdm() as overall_counter:
             data = dict()
             with open(f) as i:
                 vecs = [l.strip().split('\t') for l in i.readlines()][1:]
-                #try:
-                #    assert len(vecs) == 100
-                #except AssertionError:
-                #    continue
                 vecs = {l[0] : numpy.array(l[1:], dtype=numpy.float64) for l in vecs}
                 print(set([v.shape for v in vecs.values()]))
-                #if 'gpt' not in f and 'opt' not in f and 'x' not in f and 'bert' not in f:
-                #    key = f.split('_')[0].lower()
-                #else:
-                #    key = f.replace('_vectors.tsv', '')
-                #data[key] = vecs
-
-            ### reducing to models actually available
-            #data = {k : data[k] for k in models_sorted}
-
-            ### evaluation against human ratings
-
-            #model_data = data.copy()
-            #del data
 
             ### polysemes
             #print('evaluating on polysemy')
@@ -176,7 +160,7 @@ overall_avg = {m : numpy.nanmean([v for v in res.values()], axis=0) for m, res i
 print(overall_avg)
 
 ### writing to files
-with open('layer_by_layer_overall_results.tsv', 'w') as o:
+with open(os.path.join('results', 'layer_by_layer_overall_results.tsv'), 'w') as o:
     o.write('model\tlayer_by_layer_results\n')
     for model, avg in overall_avg.items():
         o.write('{}\t'.format(model))

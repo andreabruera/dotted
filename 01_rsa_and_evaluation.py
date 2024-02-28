@@ -36,11 +36,12 @@ def load_regression(regression_model='ridge'):
 ### Font setup
 # Using Helvetica as a font
 font_folder = '/import/cogsci/andrea/dataset/fonts/'
-font_dirs = [font_folder, ]
-font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
-for p in font_files:
-    font_manager.fontManager.addfont(p)
-matplotlib.rcParams['font.family'] = 'Helvetica LT Std'
+if os.path.exists(font_folder):
+    font_dirs = [font_folder, ]
+    font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
+    for p in font_files:
+        font_manager.fontManager.addfont(p)
+    matplotlib.rcParams['font.family'] = 'Helvetica LT Std'
 
 regression_model = 'ridge'
 standardize = False
@@ -56,17 +57,9 @@ palette = {
            'touch' : '#0072B2',
            'overall' : '#000000',
            }
-#models_sorted = [
+models_sorted = [
                  #'count', 
-                 #'roberta-large',
-                 #'gpt2-xl', 
-                 #'opt',
-                 #'gpt2-xl_mid_four', 
-                 #'OPT_mid_four',
-#                 ]
-#models_sorted = ['count', 'w2v', 'gpt2-xl_mid_four',]
-#models_sorted = ['count', 'w2v', 'gpt2-xl_low_four', 'gpt2-xl_mid_four', 'gpt2-xl_top_four']
-models_sorted = [#'count', #'w2v', 
+                 #'w2v', 
                  #'opt-125m', 
                  #'opt-350m_mid_four', 
                  #'opt-1.3b_top_twelve', 
@@ -99,12 +92,9 @@ models_sorted = [#'count', #'w2v',
                  #'gpt2-xl_top_four', 
                  #'roberta-large',
                  ]
-#models_sorted = ['count', 'w2v', 'roberta-large_low_four', 'roberta-large_mid_four', 'roberta-large_top_four']
 
 plot_folder = 'plots'
 os.makedirs(plot_folder, exist_ok=True)
-#errors_folder = os.path.join(plot_folder, 'errors')
-#os.makedirs(errors_folder, exist_ok=True)
 corr_folder = os.path.join(plot_folder, 'correlation_analysis')
 os.makedirs(corr_folder, exist_ok=True)
 poly_folder = os.path.join(plot_folder, 'sense_discrimination_analysis')
@@ -202,131 +192,6 @@ for model, vecs in tqdm(model_data.items()):
                 all_errors[model][variable].append((real, error))
             corr = scipy.stats.pearsonr(predictions, test_human)[0]
             evaluations[model][variable].append(corr)
-
-'''
-### first plotting errors
-print('plotting errors')
-
-for variable_selection in [['imageability', 'concreteness', 
-                            #'familiarity',
-                            ], ['touch', 'sight', 'smell', 'hearing', 'taste']]:
-    for model, model_errors in tqdm(all_errors.items()):
-        #if model not in ['count', 'w2v', 'gpt2-xl']:
-        #    continue
-        bins = [v/100 for v in list(range(100, 501, 25))]
-        hist_bins = [v/100 for v in list(range(100, 501, 10))]
-        line_errors = {var : {(v, v+.25) : list() for v in bins} for var in model_errors.keys()}
-        hist_values = {var : {(v, v+.1) : list() for v in hist_bins} for var in model_errors.keys()}
-        ### setting up plot
-        fig, ax = pyplot.subplots(constrained_layout=True, figsize=(22,10))
-        ax.set_xlim(left=.5, right=5.5)
-        ax.set_ylim(bottom=0., top=1.1)
-        ax.set_ylabel(
-                      'Normalized squared prediction error / normalized frequency', 
-                      fontsize=20, 
-                      fontweight='bold',
-                      labelpad=15,
-                      )
-        ax.set_xlabel(
-                      'Rating', 
-                      fontsize=20, 
-                      fontweight='bold',
-                      labelpad=15,
-                      )
-        pyplot.xticks(fontsize=15)
-        pyplot.yticks(fontsize=15)
-        ### dummy to do the legend
-
-        for col_name in variable_selection:
-            ax.bar([0.], [0.], color=palette[col_name], label=col_name)
-
-        for variable, variable_errors in model_errors.items():
-            if variable not in variable_selection:
-                continue
-            
-            xs = [data[0]+(random.choice(list(range(10)))/50) for data in variable_errors]
-            ys = [data[1] for data in variable_errors]
-            ### normalize y in range min-max
-            ys = [((y - min(ys)) / (max(ys) - min(ys))) for y in ys]
-            ### scatter
-            for x, y in zip(xs, ys):
-                #ax.scatter(x, y, s=3, color=numpy.random.rand(3,), zorder=3)
-                for lower_upper in line_errors[variable].keys():
-                    if x > lower_upper[0] and x < lower_upper[1]:
-                        line_errors[variable][lower_upper].append(y)
-                for lower_upper in hist_values[variable].keys():
-                    if x > lower_upper[0] and x < lower_upper[1]:
-                        hist_values[variable][lower_upper].append(y)
-            current_line = [(((avg_val[0]+avg_val[1])/2), lst) for avg_val, lst in line_errors[variable].items() if len(lst)>0]
-            xs = [data[0] for data in current_line]
-            ys = [data[1] for data in current_line]
-            ### normalize y in range min-max
-            avg_ys = [numpy.average(val) for val in ys]
-            #avg_ys = [((y - min(avg_ys)) / (max(avg_ys) - min(avg_ys))) for y in avg_ys]
-            #ax.plot(xs, [numpy.average(y) for y in ys], color='gray')
-            ax.errorbar(
-                       xs,
-                       avg_ys, 
-                       yerr=[numpy.std(y) for y in ys], 
-                       color=palette[variable],
-                       ecolor='darkgray',
-                       capsize=5.,
-                       zorder=2.5,
-                       linewidth=2.5,
-                       )
-            ### histogram
-            current_line = [(((avg_val[0]+avg_val[1])/2), lst) for avg_val, lst in hist_values[variable].items()]
-            xs = [data[0] for data in current_line]
-            ys = [data[1] for data in current_line]
-            hist_ys = [len(v) for v in ys]
-            #hist_ys = [((y - min(hist_ys)) / (max(hist_ys) - min(hist_ys))) for y in hist_ys]
-            #ax.bar(
-            #       xs,
-            #       hist_ys,
-            #       color=palette[variable],
-            #       alpha=0.1,
-            #       zorder=2.,
-            #       edgecolor='white',
-            #       width=0.05,
-            #       )
-            spl = scipy.interpolate.make_interp_spline(xs, hist_ys, k=3)
-            x_itp = numpy.linspace(1, 5, 100)
-            y_itp = spl(x_itp)
-            ax.plot(
-                    x_itp,
-                    y_itp,
-                    color=palette[variable],
-                    alpha=0.175,
-                    zorder=2.
-                    )
-            ax.fill_between(
-                            x_itp,
-                            y_itp,
-                            color=palette[variable],
-                            alpha=0.125,
-                            zorder=2.,
-                            )
-
-        ax.legend(fontsize=20)
-        marker = 'semantic_dimensions' if 'concreteness' in variable_selection else 'senses'
-        title = 'Errors in prediction made by {} - {}'.format(model.replace('_', ' ').replace(' mid four', ' (mid four layers)'), marker)
-        ax.set_title(
-                     title, 
-                     fontsize=23,
-                     fontweight='bold',
-                     pad=20,
-                     )
-        file_path = os.path.join(
-                                 errors_folder,
-                                 '{}_{}_errors.jpg'.format(model, marker),
-                                 )
-        if standardize:
-            file_path.replace('.jpg', 'standardized.jpg')
-        pyplot.savefig(file_path)
-        pyplot.clf()
-        pyplot.close()
-'''
-
 print('plotting bars')
 ### real plotting
 for model, model_res in evaluations.items():
@@ -581,3 +446,128 @@ ax.set_ylabel('pairwise sense discrimination accuracy', fontsize=27, fontweight=
 pyplot.savefig('{}.jpg'.format(out_file), dpi=300)
 pyplot.clf()
 pyplot.close()
+
+'''
+### plotting errors
+print('plotting errors')
+
+for variable_selection in [['imageability', 'concreteness', 
+                            #'familiarity',
+                            ], ['touch', 'sight', 'smell', 'hearing', 'taste']]:
+    for model, model_errors in tqdm(all_errors.items()):
+        #if model not in ['count', 'w2v', 'gpt2-xl']:
+        #    continue
+        bins = [v/100 for v in list(range(100, 501, 25))]
+        hist_bins = [v/100 for v in list(range(100, 501, 10))]
+        line_errors = {var : {(v, v+.25) : list() for v in bins} for var in model_errors.keys()}
+        hist_values = {var : {(v, v+.1) : list() for v in hist_bins} for var in model_errors.keys()}
+        ### setting up plot
+        fig, ax = pyplot.subplots(constrained_layout=True, figsize=(22,10))
+        ax.set_xlim(left=.5, right=5.5)
+        ax.set_ylim(bottom=0., top=1.1)
+        ax.set_ylabel(
+                      'Normalized squared prediction error / normalized frequency', 
+                      fontsize=20, 
+                      fontweight='bold',
+                      labelpad=15,
+                      )
+        ax.set_xlabel(
+                      'Rating', 
+                      fontsize=20, 
+                      fontweight='bold',
+                      labelpad=15,
+                      )
+        pyplot.xticks(fontsize=15)
+        pyplot.yticks(fontsize=15)
+        ### dummy to do the legend
+
+        for col_name in variable_selection:
+            ax.bar([0.], [0.], color=palette[col_name], label=col_name)
+
+        for variable, variable_errors in model_errors.items():
+            if variable not in variable_selection:
+                continue
+            
+            xs = [data[0]+(random.choice(list(range(10)))/50) for data in variable_errors]
+            ys = [data[1] for data in variable_errors]
+            ### normalize y in range min-max
+            ys = [((y - min(ys)) / (max(ys) - min(ys))) for y in ys]
+            ### scatter
+            for x, y in zip(xs, ys):
+                #ax.scatter(x, y, s=3, color=numpy.random.rand(3,), zorder=3)
+                for lower_upper in line_errors[variable].keys():
+                    if x > lower_upper[0] and x < lower_upper[1]:
+                        line_errors[variable][lower_upper].append(y)
+                for lower_upper in hist_values[variable].keys():
+                    if x > lower_upper[0] and x < lower_upper[1]:
+                        hist_values[variable][lower_upper].append(y)
+            current_line = [(((avg_val[0]+avg_val[1])/2), lst) for avg_val, lst in line_errors[variable].items() if len(lst)>0]
+            xs = [data[0] for data in current_line]
+            ys = [data[1] for data in current_line]
+            ### normalize y in range min-max
+            avg_ys = [numpy.average(val) for val in ys]
+            #avg_ys = [((y - min(avg_ys)) / (max(avg_ys) - min(avg_ys))) for y in avg_ys]
+            #ax.plot(xs, [numpy.average(y) for y in ys], color='gray')
+            ax.errorbar(
+                       xs,
+                       avg_ys, 
+                       yerr=[numpy.std(y) for y in ys], 
+                       color=palette[variable],
+                       ecolor='darkgray',
+                       capsize=5.,
+                       zorder=2.5,
+                       linewidth=2.5,
+                       )
+            ### histogram
+            current_line = [(((avg_val[0]+avg_val[1])/2), lst) for avg_val, lst in hist_values[variable].items()]
+            xs = [data[0] for data in current_line]
+            ys = [data[1] for data in current_line]
+            hist_ys = [len(v) for v in ys]
+            #hist_ys = [((y - min(hist_ys)) / (max(hist_ys) - min(hist_ys))) for y in hist_ys]
+            #ax.bar(
+            #       xs,
+            #       hist_ys,
+            #       color=palette[variable],
+            #       alpha=0.1,
+            #       zorder=2.,
+            #       edgecolor='white',
+            #       width=0.05,
+            #       )
+            spl = scipy.interpolate.make_interp_spline(xs, hist_ys, k=3)
+            x_itp = numpy.linspace(1, 5, 100)
+            y_itp = spl(x_itp)
+            ax.plot(
+                    x_itp,
+                    y_itp,
+                    color=palette[variable],
+                    alpha=0.175,
+                    zorder=2.
+                    )
+            ax.fill_between(
+                            x_itp,
+                            y_itp,
+                            color=palette[variable],
+                            alpha=0.125,
+                            zorder=2.,
+                            )
+
+        ax.legend(fontsize=20)
+        marker = 'semantic_dimensions' if 'concreteness' in variable_selection else 'senses'
+        title = 'Errors in prediction made by {} - {}'.format(model.replace('_', ' ').replace(' mid four', ' (mid four layers)'), marker)
+        ax.set_title(
+                     title, 
+                     fontsize=23,
+                     fontweight='bold',
+                     pad=20,
+                     )
+        file_path = os.path.join(
+                                 errors_folder,
+                                 '{}_{}_errors.jpg'.format(model, marker),
+                                 )
+        if standardize:
+            file_path.replace('.jpg', 'standardized.jpg')
+        pyplot.savefig(file_path)
+        pyplot.clf()
+        pyplot.close()
+'''
+
