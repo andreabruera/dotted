@@ -60,7 +60,7 @@ models = [
           #'xglm-2.9b', 
           'xglm-4.5b', 
           'xglm-7.5b',
-          'opt-1.3b', 'opt-6.7b',
+          #'opt-1.3b', 'opt-6.7b',
           ]
 
 plot_folder = 'plots'

@@ -184,24 +184,27 @@ def read_sensorimotor():
 def read_our_ratings():
     folder = 'data'
     human_data = dict()
-    for f in os.listdir(folder):
-        if 'dissertation' in f:
-            with open(os.path.join(folder, f)) as i:
-                lines = [l.strip().split('\t')[11:] for l in i.readlines()]
-                for l in lines:
-                    assert len(l) == 800
-                headers = [l.replace(']', '').split(' [') for l in lines[0]]
-                for head_i, head in enumerate(headers):
-                    key = ' '.join([head[0].split()[idx] for idx in [0, -1]])
-                    val = head[1].lower()
-                    if val not in human_data.keys():
-                        human_data[val] = dict()
-                    if key not in human_data[val].keys():
-                        human_data[val][key] = list()
-                    for l in lines[1:]:
-                        rating = int(l[head_i])
-                        ### min 1, max 5
-                        rating = (rating - 1) / (5 - 1)
-                        human_data[val][key].append(rating)
+    #for f in os.listdir(folder):
+    #    if 'dissertation' in f:
+    f = 'raw_dataset.tsv'
+    f_path = os.path.join(folder, f)
+    assert os.path.exists(f_path)
+    with open(f_path) as i:
+        lines = [l.strip().split('\t') for l in i.readlines()]
+        for l in lines:
+            assert len(l) == 800
+        headers = [l.replace(']', '').split(' [') for l in lines[0]]
+        for head_i, head in enumerate(headers):
+            key = ' '.join([head[0].split()[idx] for idx in [0, -1]])
+            val = head[1].lower()
+            if val not in human_data.keys():
+                human_data[val] = dict()
+            if key not in human_data[val].keys():
+                human_data[val][key] = list()
+            for l in lines[1:]:
+                rating = int(l[head_i])
+                ### min 1, max 5
+                rating = (rating - 1) / (5 - 1)
+                human_data[val][key].append(rating)
     human_data = {k : {k_two : numpy.nanmean(v_two) for k_two, v_two in v.items()} for k, v in human_data.items()}
     return human_data

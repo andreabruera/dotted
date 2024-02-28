@@ -39,7 +39,7 @@ file_name = os.path.join('plots', 'layer_by_layer.jpg')
 fig, ax = pyplot.subplots(constrained_layout=True)
 
 ax.set_xlim(left=0., right=1.)
-ax.set_ylim(bottom=0.54, top=.66)
+ax.set_ylim(bottom=0.555, top=.68)
 
 models = [
         'count-pmi',
