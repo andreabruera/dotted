@@ -163,18 +163,19 @@ collector['count-log'] = {k : [numpy.log(v) if v!=0. else 0. for v in vec] for k
 print('loaded!')
 
 print('loading fasttext...')
-ft_path = os.path.join('models', 'cc.en.300.bin')
+ft_path = os.path.join('..', 'models', 'cc.en.300.bin')
 assert os.path.exists(ft_path)
 ft = fasttext.load_model(ft_path)
 print('loaded!')
 
 print('loading word2vec...')
+os.system('export GENSIM_DATA_DIR=../models/')
 w2v = downloader.load('word2vec-google-news-300')
 print('loaded!')
 
 print('loading numberbatch...')
 concept_net = dict()
-cn_path = os.path.join('models', 'numberbatch-19.08.txt')
+cn_path = os.path.join('..', 'models', 'numberbatch-19.08.txt')
 assert os.path.exists(cn_path)
 with open(cn_path) as i:
     for l_i, l in enumerate(i):

@@ -109,7 +109,7 @@ slow_models = [
 if 'gpt' in model_name:
     model = AutoModel.from_pretrained(
                                      model_name, 
-                                     cache_dir='../../datasets/hf_models/',
+                                     cache_dir='../models/',
                                      ).to(cuda_device)
     tokenizer = AutoTokenizer.from_pretrained(model_name, sep_token='[PHR]')
     required_shape = model.embed_dim
@@ -119,12 +119,12 @@ elif 'opt' in model_name:
     if args.computational_model not in slow_models:
         model = OPTModel.from_pretrained(
                                          model_name, 
-                                         cache_dir='../../datasets/hf_models/',
+                                         cache_dir='../models/',
                                           ).to(cuda_device)
     else:
         model = OPTModel.from_pretrained(
                                          model_name, 
-                                         cache_dir='../../datasets/hf_models/',
+                                         cache_dir='../models/',
                                          )
     tokenizer = AutoTokenizer.from_pretrained(model_name, additional_special_tokens=['[PHR]'])
     required_shape = model.config.hidden_size
@@ -134,12 +134,12 @@ elif 'xglm' in model_name:
     if args.computational_model not in slow_models:
         model = XGLMModel.from_pretrained(
                                          model_name, 
-                                         cache_dir='../../datasets/hf_models/',
+                                         cache_dir='../models/',
                                           ).to(cuda_device)
     else:
         model = XGLMModel.from_pretrained(
                                          model_name, 
-                                         cache_dir='../../datasets/hf_models/',
+                                         cache_dir='../models/',
                                          )
     tokenizer = XGLMTokenizer.from_pretrained(model_name, additional_special_tokens=['[PHR]'])
     required_shape = model.config.hidden_size
@@ -149,12 +149,12 @@ elif 'tral' in model_name:
     if args.computational_model not in slow_models:
         model = AutoModelForCausalLM.from_pretrained(
                                      model_name, 
-                                     cache_dir='../../datasets/hf_models/',
+                                     cache_dir='../models/',
                                          ).to(cuda_device)
     else:
         model = AutoModelForCausalLM.from_pretrained(
                                      model_name, 
-                                     cache_dir='../../datasets/hf_models/',
+                                     cache_dir='../models/',
                                          )
     tokenizer = AutoTokenizer.from_pretrained(model_name, sep_token='[PHR]')
     required_shape = model.config.hidden_size
@@ -164,12 +164,12 @@ else:
     if args.computational_model not in slow_models:
         model = AutoModelForMaskedLM.from_pretrained(
                                      model_name, 
-                                     cache_dir='../../datasets/hf_models/',
+                                     cache_dir='../models/',
                                          ).to(cuda_device)
     else:
         model = AutoModelForMaskedLM.from_pretrained(
                                      model_name, 
-                                     cache_dir='../../datasets/hf_models/',
+                                     cache_dir='../models/',
                                          )
     tokenizer = AutoTokenizer.from_pretrained(model_name, sep_token='[PHR]')
     required_shape = model.config.hidden_size
