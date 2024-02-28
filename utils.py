@@ -39,7 +39,7 @@ def read_brysbaert_norms():
     dom = dict()
 
     counter = 0
-    with open(os.path.join('data', 'BRM-emot-submit.csv')) as i:
+    with open(os.path.join('other_ratings', 'BRM-emot-submit.csv')) as i:
         for l in i:
             if counter == 0:
                 counter += 1
@@ -51,7 +51,7 @@ def read_brysbaert_norms():
 
     conc = dict()
     counter = 0
-    with open(os.path.join('data', 'Concreteness_ratings_Brysbaert_et_al_BRM.txt')) as i:
+    with open(os.path.join('other_ratings', 'Concreteness_ratings_Brysbaert_et_al_BRM.txt')) as i:
         for l in i:
             if counter == 0:
                 counter += 1
@@ -64,7 +64,7 @@ def read_brysbaert_norms():
     fam = dict()
     fam_index = [25, 26, 27]
     img_index = [31, 32, 33]
-    with open(os.path.join('data', 'mrc2.dct')) as i:
+    with open(os.path.join('other_ratings', 'mrc2.dct')) as i:
         for l in i:
             line = [w.strip() for w in l.split()]
             word = line[-1].split('|')[0].lower()
@@ -80,7 +80,7 @@ def read_brysbaert_norms():
                     continue
                 fam[word] = (fam_val - 100) / (700 - 100)
     counter = 0
-    with open(os.path.join('data', 'glasgow_norms.tsv')) as i:
+    with open(os.path.join('other_ratings', 'glasgow_norms.tsv')) as i:
         for l in i:
             line = l.strip().split('\t')
             if counter == 0:
@@ -107,7 +107,7 @@ def read_pos(prune=False):
 
     pos = dict()
     counter = 0
-    with open(os.path.join('data', 'SUBTLEX-US_freq_with_PoS.txt')) as i:
+    with open(os.path.join('other_ratings', 'SUBTLEX-US_freq_with_PoS.txt')) as i:
         for l in i:
             if counter == 0:
                 counter += 1
@@ -122,7 +122,7 @@ def read_candidate_nouns():
     ### reading the candidate nouns
     counter = 0
     nouns = list()
-    with open(os.path.join('data', 'corelex_candidate_nouns.txt')) as i:
+    with open(os.path.join('other_ratings', 'corelex_candidate_nouns.txt')) as i:
         for l in i:
             if counter == 0:
                 counter += 1
@@ -136,7 +136,7 @@ def read_selected_nouns():
     ### reading the selected nouns
     counter = 0
     nouns = list()
-    with open(os.path.join('data', 'phrases.txt')) as i:
+    with open(os.path.join('dataset', 'phrases.txt')) as i:
         for l in i:
             if counter == 0:
                 counter += 1
@@ -162,7 +162,7 @@ def read_sensorimotor():
               'Auditory.mean' : 'hearing',
               }
     ratings = {k : dict() for k in mapper.values()}
-    with open(os.path.join('data', 'Lancaster_sensorimotor_norms_for_39707_words.tsv')) as i:
+    with open(os.path.join('other_ratings', 'Lancaster_sensorimotor_norms_for_39707_words.tsv')) as i:
         counter = 0
         for l in i:
             line = l.strip().replace(',', '.').split('\t')
@@ -182,7 +182,7 @@ def read_sensorimotor():
     return ratings
 
 def read_our_ratings():
-    folder = 'data'
+    folder = 'dataset'
     human_data = dict()
     #for f in os.listdir(folder):
     #    if 'dissertation' in f:
