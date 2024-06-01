@@ -1,29 +1,57 @@
 model	semantic_variable	correlation
-count-pmi	concreteness	0.754
-fasttext	concreteness	0.804
-numberbatch	concreteness	0.795
-xglm-1.7b_7	concreteness	0.838
-count-pmi	hearing	0.745
-fasttext	hearing	0.735
-numberbatch	hearing	0.779
-xglm-1.7b_7	hearing	0.837
-count-pmi	sight	0.813
-fasttext	sight	0.829
-numberbatch	sight	0.839
-xglm-1.7b_7	sight	0.831
-count-pmi	smell	0.642
-fasttext	smell	0.599
-numberbatch	smell	0.611
-xglm-1.7b_7	smell	0.672
-count-pmi	taste	0.73
-fasttext	taste	0.722
-numberbatch	taste	0.725
-xglm-1.7b_7	taste	0.675
-count-pmi	touch	0.635
-fasttext	touch	0.772
-numberbatch	touch	0.746
-xglm-1.7b_7	touch	0.774
-count-pmi	overall	0.72
-fasttext	overall	0.743
-numberbatch	overall	0.749
-xglm-1.7b_7	overall	0.771
+PPMI	concreteness	0.761
+fasttext	concreteness	0.781
+numberbatch	concreteness	0.777
+xglm-1.7b_7	concreteness	0.823
+PPMI	concreteness	0.761	0.0
+fasttext	concreteness	0.781	0.0
+numberbatch	concreteness	0.777	0.0
+xglm-1.7b_7	concreteness	0.823	0.0
+PPMI	hearing	0.686
+fasttext	hearing	0.647
+numberbatch	hearing	0.686
+xglm-1.7b_7	hearing	0.794
+PPMI	hearing	0.686	0.0
+fasttext	hearing	0.647	0.0
+numberbatch	hearing	0.686	0.0
+xglm-1.7b_7	hearing	0.794	0.0
+PPMI	sight	0.792
+fasttext	sight	0.791
+numberbatch	sight	0.803
+xglm-1.7b_7	sight	0.844
+PPMI	sight	0.792	0.0
+fasttext	sight	0.791	0.0
+numberbatch	sight	0.803	0.0
+xglm-1.7b_7	sight	0.844	0.0
+PPMI	smell	0.533
+fasttext	smell	0.518
+numberbatch	smell	0.529
+xglm-1.7b_7	smell	0.583
+PPMI	smell	0.533	0.0
+fasttext	smell	0.518	0.0
+numberbatch	smell	0.529	0.0
+xglm-1.7b_7	smell	0.583	0.0
+PPMI	taste	0.591
+fasttext	taste	0.643
+numberbatch	taste	0.64
+xglm-1.7b_7	taste	0.605
+PPMI	taste	0.591	0.0
+fasttext	taste	0.643	0.0
+numberbatch	taste	0.64	0.0
+xglm-1.7b_7	taste	0.605	0.0
+PPMI	touch	0.763
+fasttext	touch	0.799
+numberbatch	touch	0.781
+xglm-1.7b_7	touch	0.821
+PPMI	touch	0.763	0.0
+fasttext	touch	0.799	0.0
+numberbatch	touch	0.781	0.0
+xglm-1.7b_7	touch	0.821	0.0
+PPMI	overall	0.688
+fasttext	overall	0.697
+numberbatch	overall	0.703
+xglm-1.7b_7	overall	0.745
+PPMI	overall	0.688	0.0156
+fasttext	overall	0.697	0.0156
+numberbatch	overall	0.703	0.0156
+xglm-1.7b_7	overall	0.745	0.0156

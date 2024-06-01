@@ -37,7 +37,7 @@ def coocs_counter(all_args):
                 counter.update(1)
     return coocs
 
-
+'''
 parser = argparse.ArgumentParser()
 parser.add_argument(
                     '--pukwac_path', 
@@ -58,6 +58,7 @@ except AssertionError:
     raise RuntimeError('pUkWac is composed by 5 files, but '
                        'the provided folder contains more/less'
                        )
+'''
 
 full_stimuli = list()
 
@@ -65,13 +66,17 @@ sentences_folder = 'sentences'
 for f in os.listdir(sentences_folder):
     full_stimuli.append(f.split('.')[0])
 
-collector = {'count' : dict(), 'fasttext' : dict(), 'w2v' : dict(), 'numberbatch' : dict()}
+collector = {
+             'count' : dict(), 
+             #'fasttext' : dict(), 'w2v' : dict(), 'numberbatch' : dict(),
+             }
 
 conc, val, aro, dom, imag, fam = read_brysbaert_norms()
 pos = read_pos()
 for w in conc.keys():
     if w not in pos.keys():
         pos[w] = 'NA'
+'''
 pkls = 'pickles'
 
 freqs_file = os.path.join(pkls, 'freqs.pkl')
@@ -87,18 +92,38 @@ for k, v in freqs.items():
         final_freqs[key] += v
     except KeyError:
         final_freqs[key] = v
+'''
+### loading frequencies
+pkls = os.path.join('..', 'psychorpus', 'pickles', 'en', 'wac',) 
+freqs_f = 'en_wac_uncased_word_freqs.pkl'
+freqs_p = os.path.join(pkls, freqs_f)
+assert os.path.exists(freqs_p)
+with open(freqs_p, 'rb') as i:
+    freqs = pickle.load(i)
+coocs_f = 'en_wac_coocs_uncased_min_10_win_4.pkl'
+coocs_p = os.path.join(pkls, coocs_f)
+assert os.path.exists(coocs_p)
+with open(coocs_p, 'rb') as i:
+    coocs = pickle.load(i)
+
 relevant_pos = ['Noun', 'Verb', 'Adverb', 'Adjective']
 ### selecting vocab
-conc_vocab = [w for w in conc.keys() if w in final_freqs.keys() and pos[w] in relevant_pos]
+#conc_vocab = [w for w in conc.keys() if w in final_freqs.keys() and pos[w] in relevant_pos]
+conc_vocab = [w for w in conc.keys() if w in freqs.keys() and pos[w] in relevant_pos]
 ### pruning vocab to top 20
-boundary = numpy.quantile([final_freqs[w] for w in conc_vocab], 0.8)
-conc_vocab = [w for w in conc_vocab if final_freqs[w]>boundary]
+#boundary = numpy.quantile([final_freqs[w] for w in conc_vocab], 0.8)
+#conc_vocab = [w for w in conc_vocab if final_freqs[w]>boundary]
+conc_vocab = [w for w in conc_vocab if freqs[w]>boundary]
+boundary = numpy.quantile([freqs[w] for w in conc_vocab], 0.8)
 ### hard-adding stimuli words
 for s in full_stimuli:
     words = s.split()
     for w in words:
         if w not in conc_vocab:
             conc_vocab.append(w)
+ctx_words = sorted(set(conc_vocab))
+import pdb; pdb.set_trace()
+''' 
 ### vocab for top 20
 print('creating the vocabulary...')
 vocab_file = os.path.join(pkls, 'top_20_vocab.pkl')
@@ -119,8 +144,8 @@ else:
             vocab[w] = 0
     with open(vocab_file, 'wb') as o:
         pickle.dump(vocab, o)
-
 ids = set(vocab.values())
+
 coocs = {i_one : {i_two : 0 for i_two in ids} for i_one in ids}
 final_coocs = coocs.copy()
 coocs_file = os.path.join(pkls, 'top_20_coocs.pkl')
@@ -145,7 +170,6 @@ else:
 
     with open(coocs_file, 'wb') as o:
         pickle.dump(final_coocs, o)
-
 total = sum([final_freqs[w] for w in conc_vocab])
 
 collector['count'] = {k : numpy.average([[final_coocs[vocab[k_word]][vocab[other]] for other in conc_vocab] for k_word in k.split()], axis=0) for k in full_stimuli}
@@ -159,7 +183,10 @@ collector['count-pmi'] = {k : numpy.average(
                                  )) for other in conc_vocab] for k_word in k.split()],
                              axis=0) for k in full_stimuli}
 collector['count-log'] = {k : [numpy.log(v) if v!=0. else 0. for v in vec] for k, vec in collector['count'].items()}
-
+'''
+collector['count-pmi'] = {w : mtrx[ctx_words.index(w)] for w in ctx_words}
+### prova
+'''
 print('loaded!')
 
 print('loading fasttext...')
@@ -203,6 +230,7 @@ for f in full_stimuli:
     ### numberbatch
     vec = numpy.average([concept_net[w] for w in words], axis=0)
     collector['numberbatch'][f] = vec
+'''
 
 for k, model_vecs in collector.items():
     with open(os.path.join('vectors', '{}_vectors.tsv'.format(k)), 'w') as o:

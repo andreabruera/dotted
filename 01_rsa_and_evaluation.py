@@ -10,11 +10,32 @@ import sklearn
 from matplotlib import font_manager, pyplot
 from mne import stats
 from sklearn.linear_model import LinearRegression, RidgeCV
+from sklearn import linear_model, metrics, neighbors
 from sklearn.neural_network import MLPRegressor
 from scipy import stats
 from tqdm import tqdm
 
 from utils import read_our_ratings
+
+def load_classification(regression_model='ridge'):
+
+    if regression_model == 'ridge':
+        ### l2-normalized regression
+        regression = linear_model.RidgeClassifierCV(alphas=(0.01, 0.1, 1.0, 10.0, 100.0, 1000.))
+    elif regression_model == 'basic':
+        ### standard linear regression
+        regression = LinearRegression()
+    elif regression_model == 'neigh':
+        ### standard linear regression
+        regression = neighbors.KNeighborsRegressor()
+    elif regression_model == 'mlp':
+        ### MLP
+        size = 100
+        regression = MLPRegressor(hidden_layer_sizes=(size,),activation='tanh', )
+    else:
+        raise RuntimeError('specified model ({}) is not implemented')
+
+    return regression
 
 def load_regression(regression_model='ridge'):
 
@@ -24,6 +45,9 @@ def load_regression(regression_model='ridge'):
     elif regression_model == 'basic':
         ### standard linear regression
         regression = LinearRegression()
+    elif regression_model == 'neigh':
+        ### standard linear regression
+        regression = neighbors.KNeighborsRegressor()
     elif regression_model == 'mlp':
         ### MLP
         size = 100
@@ -65,7 +89,10 @@ models_sorted = [
                  #'opt-1.3b_top_twelve', 
                  #'xlm-roberta-large_mid_four',
                  #'count-log', 
-                 'count-pmi', 
+                 #'count-pmi', 
+                 #'control\n(random)',
+                 #'count-ppmi', 
+                 'PPMI',
                  'fasttext', 
                  'numberbatch',
                  #'xglm-564m_mid_four',
@@ -114,13 +141,14 @@ for f in os.listdir(folder):
             continue
         vecs = {l[0] : numpy.array(l[1:], dtype=numpy.float64) for l in vecs}
         if 'gpt' not in f and 'opt' not in f and 'x' not in f and 'bert' not in f:
-            key = f.split('_')[0].lower()
+            key = f.split('_')[0]
         else:
             key = f.replace('_vectors.tsv', '')
         data[key] = vecs
 
 ### reducing to models actually available
-data = {k : data[k] for k in models_sorted}
+data = {k : data[k] for k in models_sorted if 'rand' not in k}
+#data['control\n(random)'] = {s : numpy.array(random.sample(v.tolist(), k=v.shape[0])) for s, v in data['xglm-1.7b_7'].items()}
 
 ### model rsa
 ### pairwise similarities
@@ -168,35 +196,51 @@ test_splits = [list(random.sample(list(vecs.keys()), k=20)) for i in range(20)]
 evaluations = {k : {k_two : list() for k_two in human_data.keys()} for k in model_data.keys()}
 all_errors = {k : {k_two : list() for k_two in human_data.keys()} for k in model_data.keys()}
 for model, vecs in tqdm(model_data.items()):
-    for variable, ratings in human_data.items():
-        assert sorted(vecs.keys()) == sorted(ratings.keys())
-        for split in test_splits:
-            train_model = [vecs[k] for k in sorted(vecs.keys()) if k not in split]
-            train_human = [ratings[k] for k in sorted(ratings.keys()) if k not in split]
-            test_model = [vecs[k] for k in split]
-            test_human = [ratings[k] for k in split]
-            if standardize:
-                ### scaler is fit on train ONLY to avoid circularity
-                model_scaler = sklearn.preprocessing.StandardScaler().fit(train_model)
-                human_scaler = sklearn.preprocessing.StandardScaler().fit(numpy.array(train_human).reshape(-1, 1))
-                train_model = model_scaler.transform(train_model)
-                test_model = model_scaler.transform(test_model)
-                train_human = human_scaler.transform(numpy.array(train_human).reshape(-1, 1))[:, 0]
-                test_human = human_scaler.transform(numpy.array(test_human).reshape(-1, 1))[:, 0]
-            regression = load_regression(regression_model)
-            regression.fit(train_model, train_human)
-            predictions = regression.predict(test_model)
-            errors = numpy.sum([test_human,-predictions], axis=0)**2
-            assert errors.shape == predictions.shape
-            for real, error in zip(test_human, errors):
-                all_errors[model][variable].append((real, error))
-            corr = scipy.stats.pearsonr(predictions, test_human)[0]
-            evaluations[model][variable].append(corr)
-print('plotting bars')
-### real plotting
+    if 'rand' in model:
+        repetitions = 1000
+    else:
+        repetitions = 1
+    for _ in range(repetitions):
+        if 'rand' in model:
+            vecs = {k : numpy.array(random.sample(v.tolist(), k=v.shape[0])) for k, v in vecs.items()}
+            continue
+        for variable, ratings in human_data.items():
+            assert sorted(vecs.keys()) == sorted(ratings.keys())
+            for split in test_splits:
+                train_model = [vecs[k] for k in sorted(vecs.keys()) if k not in split]
+                train_human = [ratings[k] for k in sorted(ratings.keys()) if k not in split]
+                test_model = [vecs[k] for k in split]
+                test_human = [ratings[k] for k in split]
+                if standardize:
+                    ### scaler is fit on train ONLY to avoid circularity
+                    model_scaler = sklearn.preprocessing.StandardScaler().fit(train_model)
+                    human_scaler = sklearn.preprocessing.StandardScaler().fit(numpy.array(train_human).reshape(-1, 1))
+                    train_model = model_scaler.transform(train_model)
+                    test_model = model_scaler.transform(test_model)
+                    train_human = human_scaler.transform(numpy.array(train_human).reshape(-1, 1))[:, 0]
+                    test_human = human_scaler.transform(numpy.array(test_human).reshape(-1, 1))[:, 0]
+                regression = load_regression(regression_model)
+                regression.fit(train_model, train_human)
+                predictions = regression.predict(test_model)
+                errors = numpy.sum([test_human,-predictions], axis=0)**2
+                assert errors.shape == predictions.shape
+                for real, error in zip(test_human, errors):
+                    all_errors[model][variable].append((real, error))
+                corr = scipy.stats.pearsonr(predictions, test_human)[0]
+                evaluations[model][variable].append(corr)
+
 for model, model_res in evaluations.items():
     evaluations[model]['overall'] = [numpy.nanmean(v) for v in model_res.values()]
 variables = list(human_data.keys()) + ['overall']
+### random values
+#random_corrs = {var : numpy.average([vec[start:start+len(test_splits)] for start in range(0, len(vec), len(test_splits))], axis=0) for var, vec in evaluations['control\n(random)'].items()}
+#p_values = [[(model, var), scipy.stats.wilcoxon(v, random_corrs[var].tolist(), alternative='greater')[1]] for model, model_res in evaluations.items() for var, v in model_res.items() if 'rand' not in model]
+p_values = [[(model, var), scipy.stats.wilcoxon(v, [0. for _ in range(len(v))], alternative='greater')[1]] for model, model_res in evaluations.items() for var, v in model_res.items() if 'rand' not in model]
+corr_ps = mne.stats.fdr_correction([k[1] for k in p_values])[1]
+p_values = {k[0] : p for k, p in zip(p_values, corr_ps)}
+
+print('plotting bars')
+### real plotting
 #models = sorted(model_data.keys())
 corrections = [i/10 for i in range(len(variables))]
 
@@ -204,9 +248,12 @@ if len(models_sorted) > 3:
     fig, ax = pyplot.subplots(constrained_layout=True, figsize=(22,10))
 else:
     fig, ax = pyplot.subplots(constrained_layout=True, figsize=(12,10))
+
+ax.set_ylim(bottom=-0.1, top=1.1)
 out_file = os.path.join(corr_folder, 'correlation_results_{}'.format(regression_model))
 if standardize:
     out_file = '{}_standardized'.format(out_file)
+counter = 0
 with open('{}.txt'.format(out_file), 'w') as o:
     o.write('model\tsemantic_variable\tcorrelation\n')
     for var_i, var in enumerate(variables):
@@ -227,17 +274,52 @@ with open('{}.txt'.format(out_file), 'w') as o:
         for x, res in zip(xs, results):
             if x == xs[-1]:
                 color='silver'
+            if x == xs[0]:
+                res = numpy.average([res[start:start+len(test_splits)] for start in range(0, len(res), len(test_splits))], axis=0)
 
             ax.scatter(
                        [x+(random.choice(range(-25, 25))/1000) for i in range(len(res))], 
-                       [max(0, r) for r in res], 
+                       #[max(0, r) for r in res], 
+                       res,
                        color=color, 
                        alpha=0.5, 
                        edgecolors='black',
                        zorder=2.5,
                        )
+        for m_i, m in enumerate(models_sorted):
+            if 'rand' in m:
+                continue
+            p = p_values[(m, var)]
+            o.write('{}\t{}\t{}\t'.format(m, var, round(numpy.nanmean(results[m_i]), 3)))
+            o.write('{}\n'.format(round(numpy.average(p), 4)))
+            if var in ['overall', 'touch']:
+                p_color = 'white'
+            else:
+                p_color = 'black'
+            if p < 0.05:
+                if counter==0:
+                    label='p<0.05'
+                    ax.scatter(
+                           [m_i+corrections[var_i]], 
+                           [0.05], 
+                           marker='*', 
+                           color=p_color, 
+                           zorder=2.5,
+                           s=200.,
+                           label=label
+                           )
+                    counter += 1
+                else:
+                    ax.scatter(
+                           [m_i+corrections[var_i]], 
+                           [0.05], 
+                           marker='*', 
+                           color=p_color, 
+                           zorder=2.5,
+                           s=200.,
+                           )
 #ax.hlines([0.5], xmin=0., color='black', xmax=len(models_sorted)-.4, linestyles='dashdot', zorder=2.5)
-ax.hlines([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.], xmin=0., color='grey', alpha=0.4, xmax=len(models_sorted)-.4, linestyles='dashdot', zorder=2.5)
+ax.hlines([0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.], xmin=0., color='grey', alpha=0.4, xmax=len(models_sorted)-.4, linestyles='dashdot', zorder=2.5)
 ### dummy to do the legend
 
 for col_name, pal in palette.items():
@@ -271,11 +353,13 @@ pyplot.close()
 ### polysemes
 print('evaluating on polysemy')
 test_words = list(set([phr.split()[-1] for phr in list(vecs.keys())]))
+#test_splits = [list(random.sample(test_words, k=5)) for i in range(20)]
+
 ### reading verb lists
 abs_verbs = list()
 conc_verbs = list()
 counter = 0
-with open(os.path.join('data', 'phrases.txt')) as i:
+with open(os.path.join('dataset', 'phrases.txt')) as i:
     for l in i:
         if counter == 0:
             counter += 1
@@ -286,51 +370,70 @@ with open(os.path.join('data', 'phrases.txt')) as i:
 
 ### actual evaluation
 evaluations = {k : {k_two : list() for k_two in human_data.keys()} for k in model_data.keys()}
+
 for model, vecs in tqdm(model_data.items()):
-    for variable, ratings in human_data.items():
-        assert sorted(vecs.keys()) == sorted(ratings.keys())
-        for word in test_words:
-            train_model = [vecs[k] for k in sorted(vecs.keys()) if k.split()[-1]!=word]
-            train_human = [ratings[k] for k in sorted(ratings.keys()) if k.split()[-1]!=word]
-            if standardize:
-                ### scaler is fit on train ONLY to avoid circularity
-                model_scaler = sklearn.preprocessing.StandardScaler().fit(train_model)
-                human_scaler = sklearn.preprocessing.StandardScaler().fit(numpy.array(train_human).reshape(-1, 1))
-                train_model = model_scaler.transform(train_model)
-                train_human = human_scaler.transform(numpy.array(train_human).reshape(-1,1))
-            regression = load_regression(regression_model)
-            regression.fit(train_model, train_human)
-            test_keys = [phr for phr in vecs.keys() if phr.split()[-1]==word]
-            conc_phr = [phr for phr in test_keys if phr.split()[0] in conc_verbs]
-            abs_phr = [phr for phr in test_keys if phr.split()[0] in abs_verbs]
-            tests = list(itertools.product(conc_phr, abs_phr))
-            corrs = list()
-            for test in tests:
-                test_model = [vecs[k] for k in test]
-                test_human = [ratings[k] for k in test]
+    if 'rand' in model:
+        repetitions = 1000
+    else:
+        repetitions = 1
+    for _ in range(repetitions):
+        if 'rand' in model:
+            vecs = {k : numpy.array(random.sample(v.tolist(), k=v.shape[0])) for k, v in vecs.items()}
+            continue
+        for variable, ratings in human_data.items():
+            assert sorted(vecs.keys()) == sorted(ratings.keys())
+            for word in test_words:
                 if standardize:
-                    test_model = model_scaler.transform(test_model)
-                    test_human = human_scaler.transform(numpy.array(test_human).reshape(-1,1))
-                predictions = regression.predict(test_model)
-                right = 0.
-                ### right
-                for idx_one, idx_two in [(0, 0), (1, 1)]:
-                    right += abs(predictions[idx_one]-test_human[idx_two])
-                wrong = 0.
-                ### wrong
-                for idx_one, idx_two in [(0, 1), (1, 0)]:
-                    wrong += abs(predictions[idx_one]-test_human[idx_two])
-                if wrong > right:
-                    acc = 1.
-                else:
-                    acc = 0.
-                corrs.append(acc)
-            evaluations[model][variable].append(numpy.nanmean(corrs))
+                    ### scaler is fit on train ONLY to avoid circularity
+                    model_scaler = sklearn.preprocessing.StandardScaler().fit(train_model)
+                    human_scaler = sklearn.preprocessing.StandardScaler().fit(numpy.array(train_human).reshape(-1, 1))
+                    train_model = model_scaler.transform(train_model)
+                    train_human = human_scaler.transform(numpy.array(train_human).reshape(-1,1))
+                train_model = [vecs[k] for k in sorted(vecs.keys()) if k.split()[-1] != word]
+                train_human = [ratings[k] for k in sorted(vecs.keys()) if k.split()[-1] != word]
+                regression = load_regression(regression_model)
+                regression.fit(train_model, train_human)
+                test_keys = [phr for phr in vecs.keys() if phr.split()[-1]==word]
+                conc_phr = [phr for phr in test_keys if phr.split()[0] in conc_verbs]
+                abs_phr = [phr for phr in test_keys if phr.split()[0] in abs_verbs]
+                tests = list(itertools.product(conc_phr, abs_phr))
+                corrs = list()
+                for test in tests:
+                    test_model = [vecs[k] for k in test]
+                    test_human = [ratings[k] for k in test]
+                    if standardize:
+                        test_model = model_scaler.transform(test_model)
+                        test_human = human_scaler.transform(numpy.array(test_human).reshape(-1,1))
+                    predictions = regression.predict(test_model)
+                    right = 0.
+                    ### right
+                    for idx_one, idx_two in [(0, 0), (1, 1)]:
+                        right += abs(predictions[idx_one]-test_human[idx_two])
+                    wrong = 0.
+                    ### wrong
+                    for idx_one, idx_two in [(0, 1), (1, 0)]:
+                        wrong += abs(predictions[idx_one]-test_human[idx_two])
+                    if wrong > right:
+                        acc = 1.
+                    else:
+                        acc = 0.
+                    corrs.append(acc)
+                evaluations[model][variable].append(numpy.nanmean(corrs))
 
 for model, model_res in evaluations.items():
-    evaluations[model]['overall'] = [val for v in model_res.values() for val in v]
+    evaluations[model]['overall'] = numpy.average([v for v in model_res.values()], axis=0)
 
-p_values = [[(model, var), scipy.stats.wilcoxon([val-0.5 for val in v], alternative='greater')[1]] for model, model_res in evaluations.items() for var, v in model_res.items()]
+#random_corrs = {var : numpy.average([vec[start:start+len(test_splits)] for start in range(0, len(vec), len(test_splits))], axis=0) for var, vec in evaluations['control\n(random)'].items()}
+p_values = list()
+for model, model_res in evaluations.items():
+    if 'rand' in model:
+        continue
+    for var, v in model_res.items():
+        #print([model, var])
+        p = scipy.stats.wilcoxon(v,[0.5 for _ in range(len(v))], alternative='greater').pvalue
+        p_values.append(((model, var), p))
+#p_values = [[(model, var), scipy.stats.wilcoxon(v, random_corrs[var], alternative='greater')[1]] for model, model_res in evaluations.items() for var, v in model_res.items() if 'rand' not in model]
+#p_values = [[(model, var), scipy.stats.wilcoxon([val-0.5 for val in v], alternative='greater')[1]] for model, model_res in evaluations.items() for var, v in model_res.items()]
 corr_ps = mne.stats.fdr_correction([k[1] for k in p_values])[1]
 p_values = {k[0] : p for k, p in zip(p_values, corr_ps)}
 
@@ -365,6 +468,8 @@ with open('{}.txt'.format(out_file), 'w') as o:
                #ecolor='black',
                )
         for m_i, m in enumerate(models_sorted):
+            if 'rand' in m:
+                continue
             p = p_values[(m, var)]
             o.write('{}\t{}\t{}\t'.format(m, var, round(numpy.nanmean(results[m_i]), 3)))
             o.write('{}\n'.format(round(numpy.average(p), 4)))
@@ -464,7 +569,6 @@ for variable_selection in [['imageability', 'concreteness',
         ### setting up plot
         fig, ax = pyplot.subplots(constrained_layout=True, figsize=(22,10))
         ax.set_xlim(left=.5, right=5.5)
-        ax.set_ylim(bottom=0., top=1.1)
         ax.set_ylabel(
                       'Normalized squared prediction error / normalized frequency', 
                       fontsize=20, 
